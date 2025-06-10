@@ -25,7 +25,7 @@ ApplicationWindow {
     property string light:  "#d8e0e8"
 
     // CONFIGURATION PANEL (THIS IS THE PANEL WITH OPTIONS FOR EACH BLOCK)
-    property int fieldWidth: 60
+    property int fieldWidth: 70
     property int fieldHeight: 20
     property int fontSize: 8
 
@@ -240,20 +240,17 @@ ApplicationWindow {
                                                                                     "delay":        blockList.get(blockID+j).gradients.get(0).delay,
                                                                                     "rise":         blockList.get(blockID+j).gradients.get(0).rise,
                                                                                     "flatTop":      blockList.get(blockID+j).gradients.get(0).flatTop,
-                                                                                    "amplitude":    blockList.get(blockID+j).gradients.get(0).amplitude,
-                                                                                    "step":         blockList.get(blockID+j).gradients.get(0).step});
+                                                                                    "amplitude":    blockList.get(blockID+j).gradients.get(0).amplitude});
                                  groupList.get(groupList.count-1).gradients.append({"axis":         "y",
                                                                                     "delay":        blockList.get(blockID+j).gradients.get(1).delay,
                                                                                     "rise":         blockList.get(blockID+j).gradients.get(1).rise,
                                                                                     "flatTop":      blockList.get(blockID+j).gradients.get(1).flatTop,
-                                                                                    "amplitude":    blockList.get(blockID+j).gradients.get(1).amplitude,
-                                                                                    "step":         blockList.get(blockID+j).gradients.get(1).step});
+                                                                                    "amplitude":    blockList.get(blockID+j).gradients.get(1).amplitude});
                                  groupList.get(groupList.count-1).gradients.append({"axis":         "z",
                                                                                     "delay":        blockList.get(blockID+j).gradients.get(2).delay,
                                                                                     "rise":         blockList.get(blockID+j).gradients.get(2).rise,
                                                                                     "flatTop":      blockList.get(blockID+j).gradients.get(2).flatTop,
-                                                                                    "amplitude":    blockList.get(blockID+j).gradients.get(2).amplitude,
-                                                                                    "step":         blockList.get(blockID+j).gradients.get(2).step});}
+                                                                                    "amplitude":    blockList.get(blockID+j).gradients.get(2).amplitude});}
             if(tActive)         {groupList.get(groupList.count-1).t.append(        {"te":           blockList.get(blockID+j).t.get(0).te,
                                                                                     "tr":           blockList.get(blockID+j).t.get(0).tr});}
             if(groupActive)     {groupList.setProperty(groupList.count-1,           "repetitions",  blockList.get(blockID+j).repetitions);}
@@ -447,7 +444,7 @@ ApplicationWindow {
     }
 
     // Function seqToJSON()
-    function seqToJSON(sim_flag){ 
+    function seqToJSON(){ 
         var description = seqDescription.text;
         var datamodel = { 
             "description": description, 
@@ -455,12 +452,7 @@ ApplicationWindow {
             "variables": []
         };
 
-        if (sim_flag) {
-            updateRawSequence();
-            var seq = rawList;
-        } else {
-            var seq = blockList;
-        }
+        var seq = blockList;
 
         for (var i = 0; i < seq.count; ++i) {
             datamodel.blocks.push(seq.get(i));
@@ -475,17 +467,17 @@ ApplicationWindow {
     }
 
     // Function scannerToJSON()
-    function scannerToJSON(sim_flag){
+    function scannerToJSON(){
         var datamodel = { 
             "parameters": {}, 
             "variables": [] 
         };
-        
-        datamodel.parameters["b0"]     = sim_flag ? evalExpression(scannerMenu.b0)     : scannerMenu.b0;
-        datamodel.parameters["b1"]     = sim_flag ? evalExpression(scannerMenu.b1)     : scannerMenu.b1;
-        datamodel.parameters["deltat"] = sim_flag ? evalExpression(scannerMenu.deltat) : scannerMenu.deltat;
-        datamodel.parameters["gmax"]   = sim_flag ? evalExpression(scannerMenu.gmax)   : scannerMenu.gmax;
-        datamodel.parameters["smax"]   = sim_flag ? evalExpression(scannerMenu.smax)   : scannerMenu.smax;
+
+        datamodel.parameters["b0"]     = scannerMenu.b0;
+        datamodel.parameters["b1"]     = scannerMenu.b1;
+        datamodel.parameters["deltat"] = scannerMenu.deltat;
+        datamodel.parameters["gmax"]   = scannerMenu.gmax;
+        datamodel.parameters["smax"]   = scannerMenu.smax;
 
         for (var i = 0; i < variablesList.count; ++i) {
             datamodel.variables.push(variablesList.get(i));
@@ -501,13 +493,13 @@ ApplicationWindow {
 
     // Function saveSeq()
     function saveSeq(extension){
-        var datastore = seqToJSON(false);
+        var datastore = seqToJSON();
         backend.getDownloadSequence(datastore, extension);
     }
 
     // Function saveScanner()
     function saveScanner(){
-        var datastore = scannerToJSON(false);
+        var datastore = scannerToJSON();
         backend.getDownloadScanner(datastore);
     }
 
@@ -544,14 +536,14 @@ ApplicationWindow {
 
     // Function plotSeq() sends the sequence and scanner data to the backend to plot the sequence diagram
     function plotSeq(){
-        var scanstore = scannerToJSON(true);
-        var seqstore  = seqToJSON(true);
+        var scanstore = scannerToJSON();
+        var seqstore  = seqToJSON();
         backend.plotSequence(scanstore, seqstore);
     }
 
     function simulate(phantom_string){
-        var scanstore = scannerToJSON(true);
-        var seqstore  = seqToJSON(true);
+        var scanstore = scannerToJSON();
+        var seqstore  = seqToJSON();
         backend.simulate(phantom_string, seqstore, scanstore);
     }
 
@@ -606,6 +598,47 @@ ApplicationWindow {
         }
     }
 
+    // function assignIterator() assigns an iterator character to a group block.
+    function assignIterator(){  
+        const baseLetters = ['i', 'j', 'k', 'l', 'm', 'n'];
+
+        let existents  = getIterators()
+        let prohibited = getVariableNames();
+        
+        let level = 1;
+
+        while (true) {
+            for (let letter of baseLetters) {
+                const name = letter.repeat(level);
+                if (!existents.includes(name) && !prohibited.includes(name)) {
+                    return name;
+                }
+            }
+            level++;
+        }
+    }
+
+    // This function gets a list of iterator names from the sequence
+    function getIterators() {
+        let iterators = [];
+        for (let i = 0; i < blockList.count; i++) {
+            if (isGroup(i)) {
+                let iteratorName = blockList.get(i).iterator;
+                if (iteratorName && !iterators.includes(iteratorName)) {
+                    iterators.push(iteratorName);
+                }
+            }
+        }
+        return iterators;
+    }
+
+    function getVariableNames(){
+        let variableNames = [];
+        for (let i = 0; i < variablesList.count; i++) {
+            variableNames.push(variablesList.get(i).name);
+        }
+        return variableNames;
+    }
 
     // Timer & delay
     Timer {

@@ -1,6 +1,6 @@
 using Distributed
 
-if nprocs() <= 1
+if nprocs() <= 1 # Tengo que añadir un nuevo proceso, no cuando se inicia la aplicación en el servidor, sino cuando un usuario abre sesión
    addprocs(1)
 end
 
@@ -140,25 +140,22 @@ end
                                     "axis": "x",
                                     "delay": 0,
                                     "flatTop": 1e-3,
-                                    "rise": 5e-4,
-                                    "step": 0
+                                    "rise": 5e-4
                                  },
                                  {
                                     "amplitude": 0,
                                     "axis": "y",
                                     "delay": 0,
                                     "flatTop": 0,
-                                    "rise": 0,
-                                    "step": 0
+                                    "rise": 0
                                  },
                                  {
                                     "amplitude": 0,
                                     "axis": "z",
                                     "delay": 0,
                                     "flatTop": 0,
-                                    "rise": 0,
-                                    "step": 0
-                                 }
+                                    "rise": 0
+                                 
                               ],
                               "name": "",
                               "ngroups": 0,
@@ -181,24 +178,21 @@ end
                                  "axis": "x",
                                  "delay": 0,
                                  "flatTop": 1e-3,
-                                 "rise": 5e-4,
-                                 "step": 0
+                                 "rise": 5e-4
                               },
                               {
                                  "amplitude": 0,
                                  "axis": "y",
                                  "delay": 0,
                                  "flatTop": 0,
-                                 "rise": 0,
-                                 "step": 0
+                                 "rise": 0
                               },
                               {
                                  "amplitude": 0,
                                  "axis": "z",
                                  "delay": 0,
                                  "flatTop": 0,
-                                 "rise": 0,
-                                 "step": 0
+                                 "rise": 0
                               }
                            ],
                            "name": "",
@@ -414,24 +408,21 @@ end
                                     "axis": "x",
                                     "delay": 0,
                                     "flatTop": 1e-3,
-                                    "rise": 5e-4,
-                                    "step": 0
+                                    "rise": 5e-4
                                  },
                                  {
                                     "amplitude": 0,
                                     "axis": "y",
                                     "delay": 0,
                                     "flatTop": 0,
-                                    "rise": 0,
-                                    "step": 0
+                                    "rise": 0
                                  },
                                  {
                                     "amplitude": 0,
                                     "axis": "z",
                                     "delay": 0,
                                     "flatTop": 0,
-                                    "rise": 0,
-                                    "step": 0
+                                    "rise": 0
                                  }
                               ],
                               "name": "",
@@ -455,24 +446,21 @@ end
                                  "axis": "x",
                                  "delay": 0,
                                  "flatTop": 1e-3,
-                                 "rise": 5e-4,
-                                 "step": 0
+                                 "rise": 5e-4
                               },
                               {
                                  "amplitude": 0,
                                  "axis": "y",
                                  "delay": 0,
                                  "flatTop": 0,
-                                 "rise": 0,
-                                 "step": 0
+                                 "rise": 0
                               },
                               {
                                  "amplitude": 0,
                                  "axis": "z",
                                  "delay": 0,
                                  "flatTop": 0,
-                                 "rise": 0,
-                                 "step": 0
+                                 "rise": 0
                               }
                            ],
                            "name": "",

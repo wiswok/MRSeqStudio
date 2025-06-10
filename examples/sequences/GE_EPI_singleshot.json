@@ -10,24 +10,21 @@
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "0",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "A",
                     "axis": "z",
                     "delay": "0",
                     "flatTop": "1e-3",
-                    "rise": "1e-4",
-                    "step": "0"
+                    "rise": "1e-4"
                 }
             ],
             "name": "",
@@ -49,24 +46,21 @@
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "0",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "-A",
                     "axis": "z",
                     "delay": "0",
                     "flatTop": "0.5e-3",
-                    "rise": "1e-4",
-                    "step": "0"
+                    "rise": "1e-4"
                 }
             ],
             "name": "",

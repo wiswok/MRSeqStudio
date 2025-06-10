@@ -27,7 +27,8 @@
             "cod": 0,
             "name": "TR",
             "ngroups": 0,
-            "repetitions": "N"
+            "repetitions": "N",
+            "iterator": "i"
         },
         {
             "children": [],
@@ -39,24 +40,21 @@
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "0",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "G_ss",
                     "axis": "z",
                     "delay": "0",
                     "flatTop": "RF_dur",
-                    "rise": "rise_phase",
-                    "step": "0"
+                    "rise": "rise_phase"
                 }
             ],
             "name": "",
@@ -78,24 +76,21 @@
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "flat_top_phase",
-                    "rise": "rise_phase",
-                    "step": "0"
+                    "rise": "rise_phase"
                 },
                 {
-                    "amplitude": "G_phase/2",
+                    "amplitude": "G_phase/2 - i*G_phase/(N-1)",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "flat_top_phase",
-                    "rise": "rise_phase",
-                    "step": "-G_phase/(N-1)"
+                    "rise": "rise_phase"
                 },
                 {
                     "amplitude": "-G_ss",
                     "axis": "z",
                     "delay": "0",
                     "flatTop": "flat_top_phase",
-                    "rise": "rise_phase",
-                    "step": "0"
+                    "rise": "rise_phase"
                 }
             ],
             "name": "",
@@ -118,24 +113,21 @@
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "0",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "G_ss",
                     "axis": "z",
                     "delay": "0",
                     "flatTop": "RF_dur",
-                    "rise": "rise_phase",
-                    "step": "0"
+                    "rise": "rise_phase"
                 }
             ],
             "name": "",
@@ -166,24 +158,21 @@
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "ACQ_dur",
-                    "rise": "rise_ro",
-                    "step": "0"
+                    "rise": "rise_ro"
                 },
                 {
                     "amplitude": "0",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 },
                 {
                     "amplitude": "0",
                     "axis": "z",
                     "delay": "0",
                     "flatTop": "0",
-                    "rise": "0",
-                    "step": "0"
+                    "rise": "0"
                 }
             ],
             "name": "",

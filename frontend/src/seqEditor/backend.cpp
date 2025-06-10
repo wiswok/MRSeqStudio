@@ -85,6 +85,7 @@ QByteArray Backend::processJSONSequence(QByteArray data){
 
         if(!groupActive){
             block.erase("repetitions");
+            block.erase("iterator");
         }
 
         // More processing if necessary
@@ -237,7 +238,6 @@ QByteArray Backend::parseJSONSequenceToQML(QByteArray data){
                 qmlData.append("                rise: " +       gradient["rise"].dump() + "\n");
                 qmlData.append("                flatTop: " +    gradient["flatTop"].dump() + "\n");
                 qmlData.append("                amplitude: " +  gradient["amplitude"].dump() + "\n");
-                qmlData.append("                step: " +       gradient["step"].dump() + "\n");
                 if(cont<gradientsArray.size()){
                     qmlData.append("            },");
                 } else {
@@ -269,6 +269,7 @@ QByteArray Backend::parseJSONSequenceToQML(QByteArray data){
 
         if(groupActive){
             qmlData.append("        repetitions: " + block["repetitions"].dump() + " \n");
+            qmlData.append("        iterator: " + block["iterator"].dump() + " \n");
         }
 
         qmlData.append("    } \n");

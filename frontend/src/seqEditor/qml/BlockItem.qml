@@ -69,7 +69,8 @@ Item{
             configMenu.tr =         blockList.get(index).t.get(0).tr
         }
         if (configMenu.groupVisible){
-            configMenu.repetitions= blockList.get(index).repetitions
+            configMenu.repetitions = blockList.get(index).repetitions
+            configMenu.iterator   =  blockList.get(index).iterator
         }
         if (configMenu.gradientsVisible){
             var gradients = blockList.get(index).gradients
@@ -79,7 +80,6 @@ Item{
                 eval('configMenu.g' + grad.axis + 'Rise = grad.rise');
                 eval('configMenu.g' + grad.axis + 'FlatTop = grad.flatTop');
                 eval('configMenu.g' + grad.axis + 'Amplitude = grad.amplitude');
-                eval('configMenu.g' + grad.axis + 'Step = grad.step');
             }
         }
     }

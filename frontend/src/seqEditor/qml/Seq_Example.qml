@@ -26,7 +26,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             },
             ListElement{
                 axis: "y"
@@ -34,7 +33,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             },
             ListElement{
                 axis: "z"
@@ -42,7 +40,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             }
         ]
         t:[]
@@ -75,7 +72,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             },
             ListElement{
                 axis: "y"
@@ -83,7 +79,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             },
             ListElement{
                 axis: "z"
@@ -91,7 +86,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             }
         ]
         t: []
@@ -113,7 +107,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             },
             ListElement{
                 axis: "y"
@@ -121,7 +114,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             },
             ListElement{
                 axis: "z"
@@ -129,7 +121,6 @@ ListModel{
                 rise: 0.1
                 flatTop: 0.2
                 amplitude: 1e-3
-                step: 1e-4
             }
         ]
         t: []

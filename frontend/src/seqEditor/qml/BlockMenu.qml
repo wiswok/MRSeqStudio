@@ -55,10 +55,6 @@ Item {
     property alias gyAmplitude: gyAmplitudeInput.text
     property alias gzAmplitude: gzAmplitudeInput.text
 
-    property alias gxStep:      gxStepInput.text
-    property alias gyStep:      gyStepInput.text
-    property alias gzStep:      gzStepInput.text
-
     // ------- Times
     property bool tVisible
     property alias te:          teInput.text
@@ -67,6 +63,7 @@ Item {
     // ------- Group
     property bool groupVisible
     property alias repetitions: repsInput.text
+    property alias iterator:    iteratorInput.text
 
     function applyBlockChanges(blockID){
         if(durationVisible) {blockList.setProperty(blockID,          "duration",    duration);}
@@ -87,8 +84,7 @@ Item {
                                                                      "delay":        eval('g' + grad.axis + 'Delay'),
                                                                      "rise":         eval('g' + grad.axis + 'Rise'),
                                                                      "flatTop":      eval('g' + grad.axis + 'FlatTop'),
-                                                                     "amplitude":    eval('g' + grad.axis + 'Amplitude'),
-                                                                     "step":         eval('g' + grad.axis + 'Step')});}
+                                                                     "amplitude":    eval('g' + grad.axis + 'Amplitude')});}
         }
         if(tVisible)        {blockList.get(blockID).t.set(0,        {"te":           te,
                                                                      "tr":           tr});}
@@ -117,12 +113,10 @@ Item {
         gxAmplitude =   gradientsVisible ?  blockInfo.gradients.get(0).amplitude : "0";
         gyAmplitude =   gradientsVisible ?  blockInfo.gradients.get(1).amplitude : "0";
         gzAmplitude =   gradientsVisible ?  blockInfo.gradients.get(2).amplitude : "0";
-        gxStep =        gradientsVisible ?  blockInfo.gradients.get(0).step : "0";
-        gyStep =        gradientsVisible ?  blockInfo.gradients.get(1).step : "0";
-        gzStep =        gradientsVisible ?  blockInfo.gradients.get(2).step : "0";
         te =            tVisible ?          blockInfo.t.get(0).te : "0";
         tr =            tVisible ?          blockInfo.t.get(0).tr : "0";
         repetitions =   groupVisible ?      blockInfo.repetitions : "0";
+        iterator    =   groupVisible ?      blockInfo.iterator    : "";
     }
 
     Rectangle{
@@ -325,7 +319,7 @@ Item {
                     contentWidth: gradientsLayout.width
                     clip:true
                     GridLayout{ id: gradientsLayout
-                        columns: 6
+                        columns: 5
                         anchors.fill: parent
                         anchors.margins:3
                         anchors.rightMargin: 10
@@ -336,29 +330,24 @@ Item {
                         MenuLabel { text: "Rise/Fall [s]";                              Layout.alignment: Qt.AlignCenter}
                         MenuLabel { text: "FlatTopTime [s]";                            Layout.alignment: Qt.AlignCenter}
                         MenuLabel { text: "Amplitude [T/m]";                            Layout.alignment: Qt.AlignCenter}
-                        MenuLabel { text: "Step [T/m]";                                 Layout.alignment: Qt.AlignCenter}
 
                         MenuLabel { text: "Gx:";                                        Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gxDelayInput;             Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gxRiseInput;              Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gxFlatTopInput;           Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gxAmplitudeInput;         Layout.alignment: Qt.AlignCenter}
-                        TextInputItem{ idNumber: blockID;  id:gxStepInput;              Layout.alignment: Qt.AlignCenter}
 
                         MenuLabel { text: "Gy:";                                        Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gyDelayInput;             Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gyRiseInput;              Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gyFlatTopInput;           Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gyAmplitudeInput;         Layout.alignment: Qt.AlignCenter}
-                        TextInputItem{ idNumber: blockID;  id:gyStepInput;              Layout.alignment: Qt.AlignCenter}
 
                         MenuLabel { text: "Gz:";                                        Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gzDelayInput;             Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gzRiseInput;              Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gzFlatTopInput;           Layout.alignment: Qt.AlignCenter}
                         TextInputItem{ idNumber: blockID;  id:gzAmplitudeInput;         Layout.alignment: Qt.AlignCenter}
-                        TextInputItem{ idNumber: blockID;  id:gzStepInput;              Layout.alignment: Qt.AlignCenter}
-
                     }
                 }
             }
@@ -385,16 +374,18 @@ Item {
             Loader { visible: groupVisible
                 sourceComponent: configPanel
                 width: 200
-                height: 26
+                height: 55
                 GridLayout{ id: repsLayout
                     anchors.fill: parent
                     anchors.margins:3
-                    columns: 4
+                    columns: 2
                     rowSpacing: 3
+
+                    MenuLabel { text: "Iterator:";  bold: true}
+                    TextInputItem{ idNumber: blockID;  id:iteratorInput; Layout.alignment: Qt.AlignRight; readOnly: true}
 
                     MenuLabel { text: "Repetitions:";  bold: true}
                     TextInputItem{ idNumber: blockID;  id:repsInput; Layout.alignment: Qt.AlignRight}
-                    MenuLabel { text: "times"}
                 }
             }
         }

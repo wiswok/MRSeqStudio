@@ -143,10 +143,10 @@ Item{
                             var gRise = "5e-4";
                             var gFlatTop = "1e-3";
                             var gAmplitude = "1e-3";
-                            var gStep = "0";
                             var te = "20e-3";
                             var tr = "100e-3";
                             var repetitions = "1";
+                            var iterator = "";
                             // ------------------
 
                             // Single block
@@ -187,23 +187,21 @@ Item{
                                                                                                         "delay": gDelay,
                                                                                                         "rise": gRise,
                                                                                                         "flatTop": gFlatTop,
-                                                                                                        "amplitude": gAmplitude,
-                                                                                                        "step": gStep});
+                                                                                                        "amplitude": gAmplitude});
                                                      blockList.get(blockList.count-1).gradients.append({"axis":"y",
                                                                                                         "delay": "0",
                                                                                                         "rise": "0",
                                                                                                         "flatTop": "0",
-                                                                                                        "amplitude": "0",
-                                                                                                        "step": "0"});
+                                                                                                        "amplitude": "0"});
                                                      blockList.get(blockList.count-1).gradients.append({"axis":"z",
                                                                                                         "delay": "0",
                                                                                                         "rise": "0",
                                                                                                         "flatTop": "0",
-                                                                                                        "amplitude": "0",
-                                                                                                        "step": "0"});}
+                                                                                                        "amplitude": "0"});}
                                 if(tActive)         {blockList.get(blockList.count-1).t.append(        {"te": te,
                                                                                                         "tr": tr});}
-                                if(groupActive)     {blockList.setProperty(blockList.count-1,           "repetitions", repetitions);}
+                                if(groupActive)     {blockList.setProperty(blockList.count-1,           "repetitions", repetitions,
+                                                                                                        "iterator", assignIterator());}
 
                             // Group of blocks
                             } else if(code>blockButtonList.count){
@@ -258,12 +256,14 @@ Item{
                                                                                                             "delay":        grad.delay,
                                                                                                             "rise":         grad.rise,
                                                                                                             "flatTop":      grad.flatTop,
-                                                                                                            "amplitude":    grad.amplitude,
-                                                                                                            "step":         grad.step});}
+                                                                                                            "amplitude":    grad.amplitude});}
                                     }
                                     if(tActive)         {blockList.get(blockList.count-1).t.append(        {"te":           groupList.get(index).t.get(0).te,
                                                                                                             "tr":           groupList.get(index).t.get(0).tr});}
-                                    if(groupActive)     {blockList.setProperty(blockList.count-1,           "repetitions",  groupList.get(index).repetitions);}
+                                    if(groupActive)     {
+                                        blockList.setProperty(blockList.count-1,           "repetitions",  groupList.get(index).repetitions);
+                                        blockList.setProperty(blockList.count-1,           "iterator",     assignIterator());
+                                    }
 
                                     num = groupList.get(index).children.count;
                                     for(i=0;i<num;i++){

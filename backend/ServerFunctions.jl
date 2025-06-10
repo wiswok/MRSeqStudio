@@ -95,22 +95,24 @@ end
 
 "Convert a json string containing sequence information into a KomaMRIBase.Sequence object"
 json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
+   vars = read_variables(json_seq["variables"])
+
    global seq = Sequence()
-   # global R = rotation_matrix()
    
    N_x = 0
 
    blocks = json_seq["blocks"]
+   iterators = read_iterators(blocks)
 
-   function get_gradients(block::JSON3.Object, rep::Int)
+   function get_gradients(block::JSON3.Object)
       gradients = block["gradients"]
       GR = reshape([Grad(0,0) for i in 1:3],(3,1))
       for grad in gradients
          axis        = grad["axis"]
-         delay       = grad["delay"]
-         rise        = grad["rise"]
-         flatTopTime = grad["flatTop"]
-         amplitude   = grad["amplitude"] + rep*grad["step"]
+         delay       = eval_string(grad["delay"], vars, iterators)
+         rise        = eval_string(grad["rise"], vars, iterators)
+         flatTopTime = eval_string(grad["flatTop"], vars, iterators)
+         amplitude   = eval_string(grad["amplitude"], vars, iterators)
 
          idx = axis == "x" ? 1 :
                axis == "y" ? 2 :
@@ -140,14 +142,16 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
       return false
    end
 
-   function addToSeq(block::JSON3.Object, rep::Int) 
+   function addToSeq(block::JSON3.Object) 
       if block["cod"] == 0          # <------------- Group
-         repetitions =  block["repetitions"]
+         iterator    =  block["iterator"]
+         repetitions =  eval_string(block["repetitions"], vars, iterators)
          children =     block["children"]
          for i in 0:(repetitions-1)
             for j in eachindex(children)
-               addToSeq(blocks[children[j].number+1],i)
+               addToSeq(blocks[children[j].number+1])
             end
+            iterators[iterator] += 1
          end
 
       elseif block["cod"] == 1       # <-------------------------- Excitation
@@ -155,12 +159,12 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
 
          rf     = block["rf"][1]
          shape  = rf["shape"]
-         deltaf = rf["deltaf"]
+         deltaf = eval_string(rf["deltaf"], vars, iterators)
 
          # Flip angle and duration
          if haskey(block, "duration") & haskey(rf, "flipAngle")
-            duration = block["duration"]
-            flipAngle = rf["flipAngle"]
+            duration = eval_string(block["duration"], vars, iterators)
+            flipAngle = eval_string(rf["flipAngle"], vars, iterators)
 
             aux_amplitude = 1e-6
             # 1. Rectangle (hard)
@@ -175,13 +179,13 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
 
          # Amplitude and duration
          elseif haskey(block, "duration") & haskey(rf, "b1Module")
-            duration = block["duration"]  
-            amplitude = rf["b1Module"]
+            duration = eval_string(block["duration"], vars, iterators)  
+            amplitude = eval_string(rf["b1Module"], vars, iterators)
         
          # Flip angle and amplitude
          elseif haskey(rf, "flipAngle") & haskey(rf, "b1Module")
-            flipAngle = rf["flipAngle"]
-            amplitude = rf["b1Module"]
+            flipAngle = eval_string(rf["flipAngle"], vars, iterators)
+            amplitude = eval_string(rf["b1Module"], vars, iterators)
 
             aux_duration = 1e-3
             # 1. Rectangle (hard)
@@ -203,7 +207,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
             EX = PulseDesigner.RF_sinc(amplitude, duration, sys; Δf=deltaf)[1]
          end
 
-         EX.GR = get_gradients(block, rep)
+         EX.GR = get_gradients(block)
          EX.RF[1].delay = maximum(EX.GR.rise)
          EX.DUR[1] = EX.RF[1].delay + max(maximum(EX.GR.T .+ EX.GR.fall), duration)
          seq += EX
@@ -211,7 +215,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
       elseif block["cod"] == 2       # <-------------------------- Delay
          # print("Delay\n")
 
-         duration = block["duration"]
+         duration = eval_string(block["duration"], vars, iterators)
          DELAY = Delay(duration)
          seq += DELAY
 
@@ -222,14 +226,14 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
             # print("Readout\n")
          end
 
-         DEPHASE = Sequence(get_gradients(block, rep))
+         DEPHASE = Sequence(get_gradients(block))
 
          if block["cod"] == 4
-            DEPHASE.ADC[1].N = block["samples"]
-            DEPHASE.ADC[1].T = block["duration"]
-            DEPHASE.ADC[1].delay = block["adcDelay"]
+            DEPHASE.ADC[1].N = eval_string(block["samples"], vars, iterators)
+            DEPHASE.ADC[1].T = eval_string(block["duration"], vars, iterators)
+            DEPHASE.ADC[1].delay = eval_string(block["adcDelay"], vars, iterators)
 
-            N_x = block["samples"]
+            N_x = eval_string(block["samples"], vars, iterators)
          end
 
          seq += DEPHASE
@@ -237,11 +241,11 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
       elseif block["cod"] == 5       # <-------------------------- EPI
          # print("EPI\n")
 
-         fov = block["fov"]
-         lines = block["lines"]
-         samples = block["samples"]
+         fov = eval_string(block["fov"], vars, iterators)
+         lines = eval_string(block["lines"], vars, iterators)
+         samples = eval_string(block["samples"], vars, iterators)
 
-         N_x = block["samples"]
+         N_x = eval_string(block["samples"], vars, iterators)
 
          EPI = PulseDesigner.EPI(fov, lines, sys)
 
@@ -250,17 +254,17 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
       elseif block["cod"] == 6       # <-------------------------- GRE  
          # print("GRE\n")
 
-         fov = block["fov"]
-         lines = block["lines"]
-         samples = block["samples"]
+         fov = eval_string(block["fov"], vars, iterators)
+         lines = eval_string(block["lines"], vars, iterators)
+         samples = eval_string(block["samples"], vars, iterators)
 
          t  = block["t"][1]
-         te = t["te"]
-         tr = t["tr"]
+         te = eval_string(t["te"], vars, iterators)
+         tr = eval_string(t["tr"], vars, iterators)
 
          rf    = block["rf"][1]
-         α     = rf["flipAngle"]
-         Δf    = rf["deltaf"]
+         α     = eval_string(rf["flipAngle"], vars, iterators)
+         Δf    = eval_string(rf["deltaf"], vars, iterators)
 
          seq += GRE(fov, lines, te, tr, α, sys; Δf=Δf)
       end 
@@ -268,7 +272,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
 
    for i in eachindex(blocks)
       if !isChild(i)
-         addToSeq(blocks[i],0)
+         addToSeq(blocks[i])
       end
    end
 
@@ -280,15 +284,17 @@ end
 
 "Convert a json string containing scanner information into a KomaMRIBase.Scanner object"
 json_to_scanner(json_scanner::JSON3.Object) = begin
+   vars = read_variables(json_scanner["variables"])
    parameters = json_scanner["parameters"]
 
    sys = Scanner(
-      B0 = parameters["b0"],
-      B1 = parameters["b1"],
-      Gmax = parameters["gmax"],
-      Smax = parameters["smax"],
-      ADC_Δt = parameters["deltat"],
+      B0 = eval_string(parameters["b0"], vars),
+      B1 = eval_string(parameters["b1"], vars),
+      Gmax = eval_string(parameters["gmax"], vars),
+      Smax = eval_string(parameters["smax"], vars),
+      ADC_Δt = eval_string(parameters["deltat"], vars),
    )
+   
    return sys
 end
 
@@ -354,4 +360,57 @@ function render_html(html_file::String; status=200, headers=["Content-type" => "
       read(file, String)
    end
    return html(io)
+end
+
+function read_variables(json_variables::JSON3.Array)
+   variables = Dict{String,Any}()
+   for variable in json_variables
+      variables[variable["name"]] = variable["value"]
+   end
+   return variables
+end
+
+function read_iterators(json_blocks::JSON3.Array)
+   iterators = Dict{String,Int}()
+   for block in json_blocks
+      if block["cod"] == 0 # Group
+         iterators[block["iterator"]] = 0 # Initialize iterator
+      end
+   end
+   return iterators
+end
+
+"Eval a string expression and return the result"
+function eval_string(expr::String, variables::Dict, iterators::Dict{String,Int}=Dict{String,Int}())
+   if expr == ""
+       return 0
+   end
+
+   allowed_operators = Set(["+", "-", "*", "/", "(", ")", "^"])
+   number_pattern = r"^\d+\.?\d*(?:[eE][+-]?\d+)?$"
+   identifier_pattern = r"^[a-zA-Z_][a-zA-Z0-9_]*$"
+
+   tokens = eachmatch(r"[a-zA-Z_][a-zA-Z0-9_]*|\d+\.?\d*(?:[eE][+-]?\d+)?|[()+\-*/^]", expr)
+
+   all_vars = merge(variables, iterators)
+
+   rebuilt = String[]
+   for token in tokens
+      val = token.match
+      if val in allowed_operators || occursin(number_pattern, val)
+         push!(rebuilt, val)
+      elseif occursin(identifier_pattern, val) && haskey(all_vars, val)
+         push!(rebuilt, string(all_vars[val]))
+      else
+         error("Symbol not recognized: '$val'")
+      end
+   end
+
+   safe_expr = join(rebuilt, " ")
+   try
+      result = eval(Meta.parse(safe_expr))
+      return result
+   catch err
+      error("Error evaluating expression: $(err)")
+   end
 end
