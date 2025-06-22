@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(appWebMRISeq VERSION 0.1 LANGUAGES CXX)
+project(appMRSeqStudio VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -14,13 +14,13 @@ find_package(nlohmann_json CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
-qt_add_executable(appWebMRISeq
+qt_add_executable(appMRSeqStudio
     main.cpp
     backend.cpp
     backend.h
 )
 
-add_dependencies(appWebMRISeq nlohmann_json)
+add_dependencies(appMRSeqStudio nlohmann_json)
 
 set(qml_resource_files
     "qml/Main.qml"
@@ -57,7 +57,7 @@ set(qml_resource_files
     "icons/balloon.png"
 )
 
-qt6_add_resources(appWebMRISeq "qml"
+qt6_add_resources(appMRSeqStudio "qml"
     PREFIX
         "/"
     FILES
@@ -67,7 +67,7 @@ qt6_add_resources(appWebMRISeq "qml"
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
-set_target_properties(appWebMRISeq PROPERTIES
+set_target_properties(appMRSeqStudio PROPERTIES
 #    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.appFooWasm
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -75,7 +75,7 @@ set_target_properties(appWebMRISeq PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-target_link_libraries(appWebMRISeq
+target_link_libraries(appMRSeqStudio
     PRIVATE Qt6::Quick
     PRIVATE Qt6::QuickControls2
     PRIVATE Qt6::Widgets
@@ -83,7 +83,7 @@ target_link_libraries(appWebMRISeq
 )
 
 include(GNUInstallDirs)
-install(TARGETS appWebMRISeq
+install(TARGETS appMRSeqStudio
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

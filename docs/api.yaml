@@ -314,5 +314,5 @@ paths:
         - plot
       description: Plot a sequence
 info:
-  title: WebMRISeq API
+  title: MRSeqStudio API
   version: 1.0.0

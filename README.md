@@ -19,8 +19,8 @@ Web MRI Sequence Editor and Simulator based on [KomaMRI](https://github.com/Juli
 
 2. Execute the following lines:
 ```
-   git clone https://github.com/pvillacorta/WebMRISeq
-   cd WebMRISeq
+   git clone https://github.com/pvillacorta/MRSeqStudio
+   cd MRSeqStudio
    ./configure.sh
    ./compile.sh
    ./serve.sh
@@ -28,4 +28,4 @@ Web MRI Sequence Editor and Simulator based on [KomaMRI](https://github.com/Juli
 3. Open browser and go to 127.0.0.1:8085
 
 ## OpenAPI:
-The OpenAPI specification document for this API is available [here](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/pvillacorta/WebMRISeq/refs/heads/master/docs/api.yaml).
+The OpenAPI specification document for this API is available [here](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/pvillacorta/MRSeqStudio/refs/heads/master/docs/api.yaml).

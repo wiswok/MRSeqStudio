@@ -578,7 +578,7 @@ end
 # ---------------------------------------------------------------------------
 
 # title and version are required
-info = Dict("title" => "WebMRISeq API", "version" => "1.0.0")
+info = Dict("title" => "MRSeqStudio API", "version" => "1.0.0")
 openApi = OpenAPI("3.0", info)
 swagger_document = build(openApi)
   
