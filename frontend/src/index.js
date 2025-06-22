@@ -1,5 +1,5 @@
-import * as css from "./styles.css";
-import * as utils from "./utils";
+import * as css from "./index.css";
+import * as utils from "./utils_private";
 import { openScreen, initTabs } from "./style"
 
 

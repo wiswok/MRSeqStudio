@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- <base href="dynamic/"> -->
+    <title>Register</title>
+  </head>
+<body>
+  <form id="registerForm">
+    <h2>Register</h2>
+    <label for="username">Username</label>
+    <input type="text" class="login-info" id="username" name="username" required autocomplete="username" />
+  
+    <label for="email">Email</label>
+    <input type="email" class="login-info" id="email" name="email" required autocomplete="email" />
+  
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="new-password" />
+  
+    <label for="repeatPassword">Repeat Password</label>
+    <input type="password" id="repeatPassword" name="repeatPassword" required autocomplete="new-password" />
+  
+    <div class="errorMsg" id="errorRegister"></div>
+    <button type="submit">Register</button>
+  
+    <p class="form-text">
+      <span>Already have an account?</span>
+      <a href="../login">Login here</a>
+    </p>
+  </form>
+
+  <script>
+  document.getElementById('registerForm').addEventListener('submit', async e => {
+    e.preventDefault(); 
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    if (data.password != data.repeatPassword) {
+      document.getElementById("errorRegister").innerHTML = "Passwords must match";
+      return;
+    }
+
+    fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)}
+    ).then(res => {
+        if (res.status == 201) {
+          document.getElementById("errorRegister").innerHTML = "";
+          setTimeout(() => {
+            alert("User created successfully");
+            location.href = "/login";
+          }, 0);
+        }else if (res.status == 409) {
+          res.json().then(json => {
+            document.getElementById("errorRegister").innerHTML = json.error;
+          })
+        }else{
+          // Error
+        }
+    }).catch(error => {
+        console.error("Request error:", error);
+    });
+  });
+  </script>
+</body>
+</html>

@@ -354,14 +354,6 @@ sim(sequence_json, scanner_json, phantom, path) = begin
    image
 end
 
-"Render an HTML file in order to send it to the frontend"
-function render_html(html_file::String; status=200, headers=["Content-type" => "text/html"]) :: HTTP.Response
-   io = open(html_file,"r") do file
-      read(file, String)
-   end
-   return html(io)
-end
-
 function read_variables(json_variables::JSON3.Array)
    variables = Dict{String,Any}()
    for variable in json_variables
@@ -414,3 +406,15 @@ function eval_string(expr::String, variables::Dict, iterators::Dict{String,Int}=
       error("Error evaluating expression: $(err)")
    end
 end
+
+# function load_secret_key(file_path::String="secret_key.txt")
+#    if !isfile(file_path)
+#       error("Secret key file not found: $file_path")
+#    else
+#       key = read(file_path, String)
+#       if key == "this_is_a_sample_secret_key_do_not_use_this_in_production_please_generate_your_own"
+#          @warn "Using the default secret key. Please change it for production use."
+#       end
+#    end
+#    return key
+# end

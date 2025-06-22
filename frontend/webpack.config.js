@@ -9,7 +9,10 @@ module.exports = (env, argv) => {
     const isProduction = argv.mode === 'production';
 
     return {
-        entry: './src/index.js',
+        entry: {
+            index: './src/index.js',
+            login: './src/login.js',
+        },
         module: {
             rules: [
                 {
@@ -36,11 +39,24 @@ module.exports = (env, argv) => {
             new CleanWebpackPlugin(),
             new HtmlWebpackPlugin({
                 template: 'src/index.html',
+                filename: 'index.html',
+                chunks: ['index'],
+            }),
+            new HtmlWebpackPlugin({
+                template: 'src/login.html',
+                filename: 'login.html',
+                chunks: ['login'],
+            }),
+            new HtmlWebpackPlugin({
+                template: 'src/register.html',
+                filename: 'register.html',
+                chunks: ['login'],
             }),
             new CopyPlugin({
                 patterns: [
                     { from: '../public', to: 'public' },
-                    { from: 'src/utils.js', to: '.' },
+                    { from: 'src/utils_private.js', to: '.' },
+                    { from: 'src/assets', to: 'assets' },
                     { from: 'node_modules/@itk-wasm/image-io/dist/pipelines/*.{js,wasm,wasm.zst}', to: 'pipelines/[name][ext]' }
                 ],
             }),

@@ -133,11 +133,11 @@ paths:
       tags:
         - simulation
       description: Add a new simulation request
-  /simulate/{simulationId}:
+  /simulate/{simID}:
     get:
       summary: Get the result of a simulation
       parameters:
-        - name: simulationId
+        - name: simID
           required: true
           in: path
           description: The ID of the simulation
@@ -180,12 +180,12 @@ paths:
       description: >-
         Get the result of a simulation. If the simulation has finished, it
         returns its result. If not, it returns 303 with location =
-        /simulate/{simulationId}/status
-  /simulate/{simulationId}/status:
+        /simulate/{simID}/status
+  /simulate/{simID}/status:
     get:
       summary: Get the status of a simulation
       parameters:
-        - name: simulationId
+        - name: simID
           required: true
           in: path
           description: The ID of the simulation

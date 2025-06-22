@@ -58,11 +58,38 @@ window.addEventListener("resize", handleResize);
 function absorbEvent(event) {
     event.returnValue = false;
 }
-  
+
 let div1 = document.querySelector("#screenEditor");
 div1.addEventListener("touchstart", absorbEvent);
 div1.addEventListener("touchend", absorbEvent);
 div1.addEventListener("touchmove", absorbEvent);
 div1.addEventListener("touchcancel", absorbEvent);
+
+// User menu style functions
+const userMenu     = document.getElementById("user-menu");
+const toggleButton = document.getElementById("user-icon");
+const dropdownMenu = document.getElementById("user-content");
+
+let userClicked = false
+toggleButton.addEventListener("click", function (event) {
+    if (!userClicked) {
+        dropdownMenu.style.display = "block";
+        userMenu.style.background = "#d8e0e8";
+    } else {
+        dropdownMenu.style.display = "none";
+        userMenu.style.background = "gray";
+    }
+    userClicked = !userClicked;
+    event.stopPropagation(); // Evita que el click se propague al document
+});
+
+document.addEventListener("click", function (event) {
+    // Oculta el menú si se hace clic fuera del botón o del menú
+    if (!dropdownMenu.contains(event.target) && !toggleButton.contains(event.target)) {
+        dropdownMenu.style.display = "none";
+        userMenu.style.background = "gray";
+    }
+    userClicked = false
+});
 
 export { openScreen, initTabs }

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-julia backend/RESTserver.jl
+julia backend/server.jl

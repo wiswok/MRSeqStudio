@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- <base href="dynamic/"> -->
+    <title>Login</title>
+  </head>
+<body>
+  <form id="loginForm">
+    <h2>Login</h2>
+    <label for="username">Username</label>
+    <input class="login-info" type="text" id="username" name="username" required autocomplete="username" />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password" />
+
+    <div class="errorMsg" id="errorRegister"></div>
+    <button type="submit">Login</button>
+
+    <p class="form-text">
+      <span>Don't have an account?</span>
+      <a href="../register">Register now</a>
+    </p>
+  </form>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+        e.preventDefault(); 
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        .then(res => {
+          if (res.status == 200) {
+            res.json().then(json => {
+              localStorage.username = json.username;
+              localStorage.token = json.token;
+              // fetch('/', {
+              //   method: 'GET',
+              //   headers: {'Authorization': 'Bearer ' + localStorage.token}
+              // })
+            })
+            setTimeout(() => {
+              location.href = "/app";
+            }, 0);
+          }
+        });
+    });
+  </script>
+</body>
+</html>

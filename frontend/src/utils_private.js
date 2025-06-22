@@ -20,6 +20,7 @@ function komaMRIsim(phantom, seq_json, scanner_json){
         method: "POST",
         headers:{
             "Content-type": "application/json",
+            "Authorization": "Bearer " + localStorage.token,
         },
         body: JSON.stringify(params)})
     .then(res => {
@@ -34,9 +35,14 @@ function komaMRIsim(phantom, seq_json, scanner_json){
 
 function requestResult(loc){
     fetch(loc + "?" + new URLSearchParams({
-        width:  document.getElementById("sim-result").offsetWidth,
-        height: document.getElementById("sim-result").offsetHeight
-    }).toString())
+            width:  document.getElementById("sim-result").offsetWidth,
+            height: document.getElementById("sim-result").offsetHeight
+        }).toString(), {
+            method: "GET",
+            headers:{
+                "Authorization": "Bearer " + localStorage.token,
+            },
+        })
     .then(res => {
         if (res.redirected) {
             // Caso en que se recibe un 303 (redirect)
@@ -85,13 +91,6 @@ function requestResult(loc){
     });   
 }
 
-function plot_selected_seq(){
-    openFile(function (seq_json) {
-        console.log('File content:', seq_json);
-        plot_seq(seq_json);
-    });
-}
-
 function plot_seq(scanner_json, seq_json){
     const scannerObj = JSON.parse(scanner_json);
     const seqObj     = JSON.parse(seq_json);
@@ -108,6 +107,7 @@ function plot_seq(scanner_json, seq_json){
         method: "POST",
         headers: {
             "Content-type": "application/json",
+            "Authorization": "Bearer " + localStorage.token,
         },
         body: JSON.stringify(combinedObj)
     })
@@ -129,32 +129,19 @@ function plot_seq(scanner_json, seq_json){
     });
 }
 
-function openFile(callback){
-    // Get the file input element
-    var fileInput = document.getElementById('fileInput');
+function logout() {
+    fetch('/logout')
+        .then(res => {
+            if (res.status == 200) {
+                console.log("Esto va bien?");
+                localStorage.clear();
+                setTimeout(() => {location.href = "/login";}, 0);
+            }
+        });
+}
 
-    // Check if any file is selected
-    if (fileInput.files.length > 0) {
-        // Get the selected file
-        var selectedFile = fileInput.files[0];
+function loadUser() {
+    const userText = document.getElementById("user-menu-text");
 
-        // Create a new FileReader
-        var reader = new FileReader();
-
-        // Set up the FileReader to handle the file content
-        reader.onload = function (e) {
-            // e.target.result contains the file content
-            var fileContent = e.target.result;
-            // console.log('File content:', fileContent);
-            callback(fileContent); ;
-
-            // You can now do something with the file content, such as display it on the page or process it further.
-        };
-
-        // Read the file as text
-        reader.readAsText(selectedFile);
-    } else {
-        console.log('No file selected.');
-        return 0;
-    }
+    userText.innerHTML = "Hi, " + localStorage.username;
 }

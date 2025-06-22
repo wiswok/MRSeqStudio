@@ -14,6 +14,107 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Tab links */
+.tablinks {
+    background-color: #04AA6D;
+    border: none;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin-right: -4px;
+} 
+
+.tab-active {
+    background-color: #046642;
+    font-weight: bold;
+}
+
+/* File loader */
+#my_file {
+    display: none;
+}
+
+#wasmView{
+    height: 100%;
+}
+
+/* Simulator window */
+#simProgress{
+    margin-left: 5%;
+    margin-top: 100px;
+    width: 90%;
+    visibility: collapse;
+}
+
+#myProgress {
+    width: 100%;
+    background-color: #ddd;
+    visibility: collapse;
+  }
+
+#myBar {
+    width: 0%;
+    height: 30px;
+    background-color: #1d9bf0;
+}
+
+#sim-result {
+    visibility: hidden; 
+    height: 98%; 
+    width:98%;
+    margin-top: -4%;
+}
+
+#user-menu #user-icon:hover{
+    background: #d8e0e8;
+    border-radius: 8px;
+}
+
+#user-menu{
+    position: absolute;
+    height: 38px;
+    width: 38px;
+    background: gray;
+    top: 0;
+    right: 0;
+    z-index: 10;
+    border-radius: 8px;
+}
+
+#user-icon{
+    height:100%;
+    width:100%;
+}
+
+#user-content {
+    display: none;
+    height: 300px;
+    width: 250px;
+    position: relative;
+    background: #d8e0e8; 
+    top: 3px;
+    right: 220px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 52px 0px rgba(32, 33, 34, 0.685)
+}
+
+#user-menu-content {
+    height:100%;
+    width:100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+#user-menu-content * {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
 /* RESPONSIVITY */
 /* For mobile phones: */
 .container {
@@ -84,58 +185,13 @@ html, body {
     #screenEditor {
         height: 470px
     }
-}
 
-/* Tab links */
-.tablinks {
-    background-color: #04AA6D;
-    border: none;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 14px;
-    margin-right: -4px;
-} 
+    #user-menu{
+        height: 50px;
+        width: 50px;
+    }
 
-.tab-active {
-    background-color: #046642; /* Puedes ajustar este color a tu gusto */
-    font-weight: bold; /* O cualquier otro estilo que desees */
-}
-
-/* File loader */
-#my_file {
-    display: none;
-}
-
-#wasmView{
-    height: 100%;
-}
-
-/* Simulator window */
-#simProgress{
-    margin-left: 5%;
-    margin-top: 100px;
-    width: 90%;
-    visibility: collapse;
-}
-
-#myProgress {
-    width: 100%;
-    background-color: #ddd;
-    visibility: collapse;
-  }
-
-#myBar {
-    width: 0%;
-    height: 30px;
-    background-color: #1d9bf0;
-}
-
-#sim-result {
-    visibility: hidden; 
-    height: 98%; 
-    width:98%;
-    margin-top: -4%;
+    #user-content {
+        right: 208px;
+    }
 }
