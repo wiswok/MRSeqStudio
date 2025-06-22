@@ -5,6 +5,8 @@ frontend/dist
 frontend/node_modules
 .vscode
 backend/Manifest.toml
+backend/auth.txt
+backend/users.txt
 *.pem
 jwkkey.json
 jwkpub.json
