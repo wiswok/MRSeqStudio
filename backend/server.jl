@@ -312,6 +312,9 @@ end
    jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
    username = claims(jwt2)["username"]
 
+   if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
+      assign_process(username) # We assign a new julia process to the user
+   end
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
    SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID]) # Process 2 executes simulation
 
