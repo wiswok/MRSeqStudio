@@ -27,9 +27,7 @@ function handleResize() {
         for (var i = 0; i < tabs.length; i++) {
             tabs[i].style.display = "block";
         }
-        document.querySelector(".tabs-mobile").style.display = "none";
     } else {
-        document.querySelector(".tabs-mobile").style.display = "block";
         // Agrega la clase 'tab-active' al botón/tab activo
         document.getElementById("btn-" + "screenEditor").classList.add("tab-active");
     }
@@ -42,10 +40,7 @@ function initTabs(){
         for (var i = 0; i < tabs.length; i++) {
           tabs[i].style.display = "block";
         }
-        document.querySelector(".tabs-mobile").style.display = "none";
     } else {
-        // Si es móvil, ocultar los divs y mostrar las pestañas
-        document.querySelector(".tabs-mobile").style.display = "block";
         // Agrega la clase 'tab-active' al botón/tab activo
         document.getElementById("btn-" + "screenEditor").classList.add("tab-active");
     }

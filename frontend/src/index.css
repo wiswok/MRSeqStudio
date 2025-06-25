@@ -14,7 +14,11 @@ html, body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Tab links */
+
+.tabs-mobile {
+    display: block;
+}
+
 .tablinks {
     background-color: #04AA6D;
     border: none;
@@ -194,4 +198,9 @@ html, body {
     #user-content {
         right: 208px;
     }
+
+    .tabs-mobile {
+        display: none;
+    }
+
 }
