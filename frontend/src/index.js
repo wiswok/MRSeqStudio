@@ -23,6 +23,9 @@ let imageData
 let renderer3d
 let renderWindow3d
 
+let colorWindow = 0;
+let colorLevel  = 0;
+
 let planeNormal = [0, 0, -1]
 let planeCenter = [0, 0, 0]
 
@@ -134,6 +137,16 @@ function addReslicerToRenderer() {
   jActor3d.setMapper(jMapper)
   kActor3d.setMapper(kMapper)
 
+  updateColorLevelandWindow();
+
+  iActor3d.getProperty().setColorLevel(colorLevel);
+  jActor3d.getProperty().setColorLevel(colorLevel);
+  kActor3d.getProperty().setColorLevel(colorLevel);
+
+  iActor3d.getProperty().setColorWindow(colorWindow);
+  jActor3d.getProperty().setColorWindow(colorWindow);
+  kActor3d.getProperty().setColorWindow(colorWindow);
+
   renderer3d.addActor(iActor3d)
   renderer3d.addActor(jActor3d)
   renderer3d.addActor(kActor3d)
@@ -153,6 +166,9 @@ function addSlicePlane(){
 
   resliceMapper.setInputData(imageData)
   resliceActor3d.setMapper(resliceMapper)
+
+  resliceActor3d.getProperty().setColorLevel(colorLevel);
+  resliceActor3d.getProperty().setColorWindow(colorWindow);
 
   renderer3d.addActor(resliceActor3d)
 
@@ -175,6 +191,19 @@ function updateCameraBounds() {
   const bounds = imageData.getBounds()
   const parallelScale = (bounds[3] - bounds[2]) / 2
   renderWindow3d.render()
+}
+
+function updateColorLevelandWindow() {
+  const scalars = imageData.getPointData().getScalars().getData();
+  let min =  Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < scalars.length; i++) {
+    const v = scalars[i];
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  colorWindow = max - min;
+  colorLevel  =  min + colorWindow / 2;
 }
 
 async function main() {
