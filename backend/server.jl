@@ -29,8 +29,10 @@ using StructTypes
 end
 
 dynamic_files_path = string(@__DIR__, "/../frontend/dist")
+public_files_path  = string(@__DIR__, "/../public")
+
 dynamicfiles(dynamic_files_path, "/") 
-staticfiles("../public", "public") 
+staticfiles(public_files_path, "/public")
 
 const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map",
                      "/register", "/"]

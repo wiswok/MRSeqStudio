@@ -16,8 +16,8 @@ import vtkPlane from "@kitware/vtk.js/Common/DataModel/Plane"
 import { SlabTypes } from "@kitware/vtk.js/Rendering/Core/ImageResliceMapper/Constants"
 import vtkImplicitPlaneRepresentation from '@kitware/vtk.js/Widgets/Representations/ImplicitPlaneRepresentation';
 
-const niftiFile = "cadera.nii.gz"
-const niftiUrl = `../public/${niftiFile}`
+const niftiFile = "brain_phantom3D/T1.nii.gz"
+const niftiUrl  = `../public/nifti_phantoms/${niftiFile}`
 
 let imageData
 let renderer3d
@@ -71,10 +71,11 @@ async function loadNifti() {
   const dataAccessHelper = DataAccessHelper.get("http")
   // @ts-ignore - bad typings
   const niftiArrayBuffer = await dataAccessHelper.fetchBinary(niftiUrl)
+  const fileName = niftiFile.split("/")[niftiFile.split("/").length - 1]
   const { image: itkImage, webWorker } = await niftiReadImage({
     data: new Uint8Array(niftiArrayBuffer),
     // tienes que darle el nombre del archivo, no sé muy bien por qué
-    path: niftiFile
+    path: fileName
   })
   webWorker.terminate()
   // convertir formato itk a vtk
@@ -98,7 +99,6 @@ const kActor3d = vtkImageSlice.newInstance()
 // Selected plane
 const slicePlane = vtkPlane.newInstance()
 slicePlane.setNormal(planeNormal)
-const resliceActor = vtkImageSlice.newInstance()
 const resliceMapper = vtkImageResliceMapper.newInstance()
 const resliceActor3d = vtkImageSlice.newInstance()
 
@@ -152,7 +152,6 @@ function addSlicePlane(){
   resliceMapper.setSlicePlane(slicePlane)
 
   resliceMapper.setInputData(imageData)
-  resliceActor.setMapper(resliceMapper)
   resliceActor3d.setMapper(resliceMapper)
 
   renderer3d.addActor(resliceActor3d)

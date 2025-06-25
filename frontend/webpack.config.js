@@ -54,7 +54,6 @@ module.exports = (env, argv) => {
             }),
             new CopyPlugin({
                 patterns: [
-                    { from: '../public', to: 'public' },
                     { from: 'src/utils_private.js', to: '.' },
                     { from: 'src/assets', to: 'assets' },
                     { from: 'node_modules/@itk-wasm/image-io/dist/pipelines/*.{js,wasm,wasm.zst}', to: 'pipelines/[name][ext]' }
