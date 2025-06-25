@@ -566,7 +566,9 @@ ApplicationWindow {
             variablesMenu.applyVariablesChanges();
         } if (idNumber >= 0){                         // Apply changes to the sequence block panel
             configMenu.applyBlockChanges(idNumber); 
-        } 
+        } if (idNumber === -3) {
+            console.log("Phantom cambiado!");
+        }
     }
 
     // function evalExpression() evaluates a mathematical expression which can contain variable names

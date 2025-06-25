@@ -44,7 +44,7 @@ Rectangle{
         ComboBoxItem{
             id: phantomInput;
             idNumber: -3;
-            model: ["Brain 2D", "Brain 3D", "Pelvis 2D"];
+            model: ["Brain 3D", "Brain 2D", "Pelvis 2D"];
         } 
     }
 
