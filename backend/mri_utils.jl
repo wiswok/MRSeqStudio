@@ -324,7 +324,7 @@ sim(sequence_json, scanner_json, phantom, path) = begin
    if phantom     == "Brain 2D"
       phant = KomaMRI.brain_phantom2D()
    elseif phantom == "Brain 3D"
-      phant = KomaMRI.brain_phantom3D(; ss=3)
+      phant = KomaMRI.brain_phantom3D(; ss=3, start_end=[1, 360])
    elseif phantom == "Pelvis 2D"
       phant = KomaMRI.pelvis_phantom2D()
    end
