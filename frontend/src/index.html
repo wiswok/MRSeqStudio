@@ -32,8 +32,9 @@
             <div id="qtspinner" style="height:100%">
                 <center>
                     <div style="height:20px"></div>
-                    <img src="qtlogo.svg" width="320" height="200" style="display:block"></img>
-                    <strong>Qt for WebAssembly: appFooWasm</strong>
+                    <img src="qtlogo.svg" width="250" height="156" style="display:block"></img>
+                    <strong>Qt for WebAssembly: MRSeqStudio</strong>
+                    <img id="loading-qt" class="loading" src="assets/loading.gif"></img>
                     <div id="qtstatus"></div>
                     <noscript>JavaScript is disabled. Please enable JavaScript to use this application.</noscript>
                 </center> 
@@ -46,6 +47,7 @@
             <iframe class="content" id="seq-diagram" frameBorder="0" style="visibility: hidden; height: 98%; width:98%"></iframe>
         </div>
         <div class="box col-3" id="screen3DViewer">
+            <img id="loading-vtk" class="loading content" src="assets/loading.gif" />    
             <div id="VTKjs" style="width:100%; height:100%"></div>
             <p class="title">3D Slice Viewer</p>
         </div>
