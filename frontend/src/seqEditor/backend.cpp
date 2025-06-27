@@ -332,6 +332,9 @@ EM_JS(void, plot_sequence, (const char* scanModel, const char* seqModel), {
 EM_JS(void, plot_3d, (float gx, float gy, float gz, float deltaf, float gamma), {
     setNormalPlane(gx, gy, gz, deltaf, gamma);
 })
+EM_JS(void, display_phantom, (const char* filename), {
+    displayVolume(UTF8ToString(filename));
+})
 EM_JS(void, sim_js, (const char* phantom, const char* seqModel, const char* scanModel), {
     komaMRIsim(UTF8ToString(phantom), UTF8ToString(seqModel), UTF8ToString(scanModel));
 })
@@ -471,6 +474,12 @@ void Backend::plotSequence(QString qmlScan, QString qmlSeq){
 void Backend::plot3D(float gx, float gy, float gz, float deltaf, float gamma){
     #ifdef Q_OS_WASM
         plot_3d(gx, gy, gz, deltaf, gamma);
+    #endif
+}
+
+void Backend::displayPhantom(QString filename){
+    #ifdef Q_OS_WASM
+        display_phantom(filename.toStdString().c_str());
     #endif
 }
 

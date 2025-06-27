@@ -16,8 +16,8 @@ import vtkPlane from "@kitware/vtk.js/Common/DataModel/Plane"
 import { SlabTypes } from "@kitware/vtk.js/Rendering/Core/ImageResliceMapper/Constants"
 import vtkImplicitPlaneRepresentation from '@kitware/vtk.js/Widgets/Representations/ImplicitPlaneRepresentation';
 
-const niftiFile = "brain_phantom3D/T1.nii.gz"
-const niftiUrl  = `../public/nifti_phantoms/${niftiFile}`
+let niftiFile
+let niftiUrl
 
 let imageData
 let renderer3d
@@ -29,7 +29,31 @@ let colorLevel  = 0;
 let planeNormal = [0, 0, -1]
 let planeCenter = [0, 0, 0]
 
-function setNormalPlane(gx, gy, gz, deltaf, gamma){
+// i, j, k planes
+const iPlane = vtkPlane.newInstance()
+const jPlane = vtkPlane.newInstance()
+const kPlane = vtkPlane.newInstance()
+iPlane.setNormal([1, 0, 0])
+jPlane.setNormal([0, 1, 0])
+kPlane.setNormal([0, 0, 1])
+const iMapper = vtkImageResliceMapper.newInstance()
+const jMapper = vtkImageResliceMapper.newInstance()
+const kMapper = vtkImageResliceMapper.newInstance()
+const iActor3d = vtkImageSlice.newInstance()
+const jActor3d = vtkImageSlice.newInstance()
+const kActor3d = vtkImageSlice.newInstance()
+
+// Selected plane
+const slicePlane = vtkPlane.newInstance()
+slicePlane.setNormal(planeNormal)
+const resliceMapper = vtkImageResliceMapper.newInstance()
+const resliceActor = vtkImageSlice.newInstance()
+
+// Outline (vtkImplicitPlaneRepresentation)
+const representation = vtkImplicitPlaneRepresentation.newInstance();
+const state = vtkImplicitPlaneRepresentation.generateState();
+
+async function setNormalPlane(gx, gy, gz, deltaf, gamma){
   planeNormal = [gx, gy, gz]
 
   let norm = Math.sqrt(gx * gx + gy * gy + gz * gz);
@@ -58,7 +82,35 @@ function setNormalPlane(gx, gy, gz, deltaf, gamma){
 }
 window.setNormalPlane = setNormalPlane
 
-function setup() {
+async function displayVolume(filename){
+  niftiFile = `${filename}/T1.nii.gz`
+  niftiUrl  = `../public/nifti_phantoms/${niftiFile}`
+
+  document.getElementById("VTKjs").style.display = "none";
+  document.getElementById("loading-vtk").style.display = "block";
+
+  try{
+    await loadNifti();
+    // Remove previous actors
+    renderer3d.removeActor(resliceActor);
+    representation.getActors().forEach(actor => {
+      renderer3d.removeActor(actor);
+    });
+    // load 3 orthogonal slices
+    addReslicerToRenderer();
+    // Render
+    renderWindow3d.render();
+  }catch(error){
+    console.log(error);
+  }finally{
+    document.getElementById("loading-vtk").style.display = "none"; 
+    document.getElementById("VTKjs").style.display = "block";
+  }
+}
+window.displayVolume = displayVolume
+
+
+async function setup() {
   const genericRenderer3d = vtkGenericRenderWindow.newInstance({
     background: [ 0.188,
                   0.200,
@@ -85,30 +137,6 @@ async function loadNifti() {
   imageData = vtkITKHelper.convertItkToVtkImage(itkImage)
 }
 
-// i, j, k planes
-const iPlane = vtkPlane.newInstance()
-const jPlane = vtkPlane.newInstance()
-const kPlane = vtkPlane.newInstance()
-iPlane.setNormal([1, 0, 0])
-jPlane.setNormal([0, 1, 0])
-kPlane.setNormal([0, 0, 1])
-const iMapper = vtkImageResliceMapper.newInstance()
-const jMapper = vtkImageResliceMapper.newInstance()
-const kMapper = vtkImageResliceMapper.newInstance()
-const iActor3d = vtkImageSlice.newInstance()
-const jActor3d = vtkImageSlice.newInstance()
-const kActor3d = vtkImageSlice.newInstance()
-
-// Selected plane
-const slicePlane = vtkPlane.newInstance()
-slicePlane.setNormal(planeNormal)
-const resliceMapper = vtkImageResliceMapper.newInstance()
-const resliceActor3d = vtkImageSlice.newInstance()
-
-// Outline (vtkImplicitPlaneRepresentation)
-const representation = vtkImplicitPlaneRepresentation.newInstance();
-const state = vtkImplicitPlaneRepresentation.generateState();
-
 function addReslicerToRenderer() {
   planeCenter = imageData.getCenter()
 
@@ -116,14 +144,6 @@ function addReslicerToRenderer() {
   iPlane.setOrigin(planeCenter)
   jPlane.setOrigin(planeCenter)
   kPlane.setOrigin(planeCenter)
-
-  iMapper.setSlabType(SlabTypes.MEAN)
-  jMapper.setSlabType(SlabTypes.MEAN)
-  kMapper.setSlabType(SlabTypes.MEAN)
-
-  iMapper.setSlabThickness(1)
-  jMapper.setSlabThickness(1)
-  kMapper.setSlabThickness(1)
 
   iMapper.setSlicePlane(iPlane)
   jMapper.setSlicePlane(jPlane)
@@ -158,21 +178,19 @@ function addReslicerToRenderer() {
 function addSlicePlane(){
   // Selected plane
   slicePlane.setNormal(planeNormal);
+
   slicePlane.setOrigin(planeCenter)
-
-  resliceMapper.setSlabType(SlabTypes.MEAN)
-  resliceMapper.setSlabThickness(1)
   resliceMapper.setSlicePlane(slicePlane)
-
   resliceMapper.setInputData(imageData)
-  resliceActor3d.setMapper(resliceMapper)
+  resliceActor.setMapper(resliceMapper)
 
-  resliceActor3d.getProperty().setColorLevel(colorLevel);
-  resliceActor3d.getProperty().setColorWindow(colorWindow);
+  resliceActor.getProperty().setColorLevel(colorLevel);
+  resliceActor.getProperty().setColorWindow(colorWindow);
 
-  renderer3d.addActor(resliceActor3d)
+  renderer3d.addActor(resliceActor)
 
   const bounds = imageData.getBounds()
+
   state.placeWidget(bounds);
 
   state.setOrigin(planeCenter)
@@ -183,14 +201,6 @@ function addSlicePlane(){
   
   renderer3d.resetCamera()
   renderer3d.resetCameraClippingRange()
-}
-
-function updateCameraBounds() {
-  // si quieres que la cámara se ajuste a los límites de la imagen
-  // por defecto se ajusta a la esfera que contiene todos los puntos
-  const bounds = imageData.getBounds()
-  const parallelScale = (bounds[3] - bounds[2]) / 2
-  renderWindow3d.render()
 }
 
 function updateColorLevelandWindow() {
@@ -208,12 +218,7 @@ function updateColorLevelandWindow() {
 
 async function main() {
   initTabs()
-
   setup()
-  await loadNifti()
-  addReslicerToRenderer()
-  updateCameraBounds()
-
   document.getElementById("btn-screenEditor").onclick = function() {openScreen('screenEditor')}
   document.getElementById("btn-screenSeq").onclick = function() {openScreen('screenSeq')}
   document.getElementById("btn-screen3DViewer").onclick = function() {openScreen('screen3DViewer')}
