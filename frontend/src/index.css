@@ -16,6 +16,7 @@ html, body {
 [id^="screen"] {
     color: #d8e0e8;
     font-family: Arial, Helvetica, sans-serif;
+    background-color: #303336;
 }
 
 
@@ -175,8 +176,18 @@ html, body {
     display: none;
 }
 
+.box{
+    position:absolute;
+    top: var(--navbar-size);
+}
+
 @media only screen and (min-width: 1500px) and (min-height: 680px) {
 /* For desktop and tablet: */
+    .box{
+        position: relative;
+        top: 0;
+    }
+
     .container{
         display: flex;
         padding-left:   25px;
@@ -202,7 +213,6 @@ html, body {
     .col-12 { width: 100%; border-radius: 0 !important;}
 
     [id^="screen"] {
-        background-color: #303336;
         border-radius: 8px;
     }
 

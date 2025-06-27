@@ -4,11 +4,11 @@ function openScreen(screenId) {
     // Oculta todos los divs
     var tabs = document.getElementsByClassName("box");
     for (var i = 0; i < tabs.length; i++) {
-      tabs[i].style.display = "none";
+      tabs[i].style.zIndex = 0;
     }
   
     // Muestra el div seleccionado
-    document.getElementById(screenId).style.display = "block";
+    document.getElementById(screenId).style.zIndex = 20;
 
     // Elimina la clase 'tab-active' de todos los botones
     var buttons = document.querySelectorAll(".tabs-mobile button");
@@ -28,8 +28,7 @@ function handleResize() {
             tabs[i].style.display = "block";
         }
     } else {
-        // Agrega la clase 'tab-active' al botón/tab activo
-        document.getElementById("btn-" + "screenEditor").classList.add("tab-active");
+        openScreen("screenEditor");
     }
 }
 
@@ -41,8 +40,6 @@ function initTabs(){
           tabs[i].style.display = "block";
         }
     } else {
-        // Agrega la clase 'tab-active' al botón/tab activo
-        document.getElementById("btn-" + "screenEditor").classList.add("tab-active");
         openScreen("screenEditor");
     }
 }
