@@ -43,6 +43,7 @@ function initTabs(){
     } else {
         // Agrega la clase 'tab-active' al botón/tab activo
         document.getElementById("btn-" + "screenEditor").classList.add("tab-active");
+        openScreen("screenEditor");
     }
 }
 
