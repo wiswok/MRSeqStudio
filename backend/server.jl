@@ -51,7 +51,6 @@ global STATUS_FILES    = Dict{Int, String}()
 # These won't be necessary once the simulation-process 
 # correspondence table is implemented
 
-
 # global statusFile = ""
 # global simProgress = -1
 # global result = nothing
@@ -69,6 +68,11 @@ global STATUS_FILES    = Dict{Int, String}()
       write(io,progress)
       close(io)
       return nothing
+   end
+   function update_progress!(w::String, progress::Int)
+      io = open(w,"w")
+      write(io,progress)
+      close(io)
    end
 end
 
@@ -316,7 +320,7 @@ end
       assign_process(username) # We assign a new julia process to the user
    end
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
-   SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID]) # Process 2 executes simulation
+   SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID])
 
    # while 1==1
    #    io = open(statusFile,"r")
@@ -392,7 +396,7 @@ end
       SIM_PROGRESSES[_simID] = read(io,Int32)
    end
    close(io)
-   if SIM_PROGRESSES[_simID] < 101      # Simulation not started or in progress
+   if -2 < SIM_PROGRESSES[_simID] < 101      # Simulation not started or in progress
       headers = ["Location" => string("/simulate/",_simID,"/status")]
       return HTTP.Response(303,headers)
    elseif SIM_PROGRESSES[_simID] == 101  # Simulation finished
@@ -404,6 +408,9 @@ end
       html_buffer = IOBuffer()
       KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
       return HTTP.Response(200,body=take!(html_buffer))
+   elseif SIM_PROGRESSES[_simID] == -2 # Simulation failed
+      error_msg = fetch(SIM_RESULTS[_simID])
+      return HTTP.Response(500,body=JSON3.write(error_msg))
    end
 end
 
@@ -416,6 +423,7 @@ end
       description: |
          Get the status of a simulation:
          - If the simulation has not started yet, it returns -1
+         - If the simulation has has failed, it returns -2
          - If the simulation is running, it returns a value between 0 and 100
          - If the simulation has finished but the reconstruction is in progress, it returns 100
          - If the reconstruction has finished, it returns 101
@@ -569,16 +577,20 @@ end
             description: Internal server error
 """
 @post "/plot" function(req::HTTP.Request)
-   scanner_data = json(req)["scanner"]
-   seq_data     = json(req)["sequence"]
-   width  = json(req)["width"]  - 15
-   height = json(req)["height"] - 20
-   sys = json_to_scanner(scanner_data)
-   seq = json_to_sequence(seq_data, sys)
-   p = plot_seq(seq; darkmode=true, width=width, height=height, slider=height>275)
-   html_buffer = IOBuffer()
-   KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
-   return HTTP.Response(200,body=take!(html_buffer))
+   try
+      scanner_data = json(req)["scanner"]
+      seq_data     = json(req)["sequence"]
+      width  = json(req)["width"]  - 15
+      height = json(req)["height"] - 20
+      sys = json_to_scanner(scanner_data)
+      seq = json_to_sequence(seq_data, sys)
+      p = plot_seq(seq; darkmode=true, width=width, height=height, slider=height>275)
+      html_buffer = IOBuffer()
+      KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
+      return HTTP.Response(200,body=take!(html_buffer))
+   catch e
+      return HTTP.Response(500,body=JSON3.write(e))
+   end
 end
 # ---------------------------------------------------------------------------
 

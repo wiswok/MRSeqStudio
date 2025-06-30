@@ -71,11 +71,19 @@ html, body {
     background-color: #1d9bf0;
 }
 
-#sim-result {
+#simResult {
     visibility: hidden; 
     height: 98%; 
     width:98%;
     margin-top: -4%;
+}
+
+.error-msg{
+    height: 95%; 
+    width:95%;
+    padding: 20px;
+    white-space: pre-wrap;
+    color: rgb(255, 99, 99);
 }
 
 #user-menu #user-icon:hover{
@@ -90,7 +98,7 @@ html, body {
     background: gray;
     top: 0;
     right: 0;
-    z-index: 10;
+    z-index: 30;
     border-radius: 8px;
 }
 
@@ -108,7 +116,7 @@ html, body {
     top: 3px;
     right: 220px;
     border-radius: 10px;
-    box-shadow: 0px 0px 52px 0px rgba(32, 33, 34, 0.685)
+    box-shadow: 0px 0px 52px 0px rgba(32, 33, 34, 0.685);
 }
 
 #user-menu-content {
@@ -172,7 +180,7 @@ html, body {
     display: block;
 }
 
-#loading-vtk{
+#loading-vtk, #loading-seq{
     display: none;
 }
 

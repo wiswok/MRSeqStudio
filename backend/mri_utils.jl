@@ -340,18 +340,27 @@ sim(sequence_json, scanner_json, phantom, path) = begin
    simParams = Dict{String,Any}()
 
    # Simulation
-   raw_signal = simulate(phant, seq, sys; sim_params=simParams, w=path)
-
-   # Reconstruction
-   image, kspace = recon(raw_signal, seq)
-
-   if path !== nothing
-         io = open(path,"w") # "w" mode overwrites last status value, even if it has not been read yet
-         write(io,trunc(Int,101))
-         close(io)
+   raw_signal = 0
+   try
+      raw_signal = simulate(phant, seq, sys; sim_params=simParams, w=path)
+   catch e
+      println("Simulation failed")
+      display(e)
+      update_progress!(path, -2)
+      return e
    end
 
-   image
+   # Reconstruction
+   try
+      image, kspace = recon(raw_signal, seq)
+      update_progress!(path, 101)
+      return image
+   catch e
+      println("Reconstruction failed")
+      display(e)
+      update_progress!(path, -2)
+      return e
+   end
 end
 
 function read_variables(json_variables::JSON3.Array)
