@@ -9,7 +9,9 @@ function komaMRIsim(phantom, seq_json, scanner_json){
         scanner: scannerObj
     }
 
-    document.getElementById('sim-result').style.visibility  = "hidden";
+    document.getElementById('simResult').style.visibility  = "hidden";
+
+    clearSimulationPanel();
 
     // HTTP Status Codes:
     // 200: OK
@@ -33,10 +35,18 @@ function komaMRIsim(phantom, seq_json, scanner_json){
     )
 }
 
+function clearSimulationPanel() {
+    document.getElementById("simProgress").style.visibility = "collapse";
+    document.getElementById('response').style.visibility    = "collapse";
+    document.getElementById('myProgress').style.visibility  = "collapse";
+    document.getElementById("myBar").style.width            = "0%";
+    document.getElementById("simErrorMsg").innerHTML          = "";
+}
+
 function requestResult(loc){
     fetch(loc + "?" + new URLSearchParams({
-            width:  document.getElementById("sim-result").offsetWidth,
-            height: document.getElementById("sim-result").offsetHeight
+            width:  document.getElementById("simResult").offsetWidth,
+            height: document.getElementById("simResult").offsetHeight
         }).toString(), {
             method: "GET",
             headers:{
@@ -52,6 +62,9 @@ function requestResult(loc){
             return res.json().then(json => {
                 if (json === -1) {
                     document.getElementById('response').innerHTML = "Starting simulation...";
+                } else if (json === -2){
+                    //Error
+                    setTimeout(function() { requestResult(loc); }, 500);
                 } else {
                     // Status Bar
                     document.getElementById('response').innerHTML = json + "%";
@@ -59,28 +72,29 @@ function requestResult(loc){
                     var elem = document.getElementById("myBar");
                     elem.style.width = json + "%";
                 }
-                if (json < 100) {
+                if (json > -2 && json < 100) {
                     setTimeout(function() { requestResult(loc); }, 500);
                 } else if (json === 100) {
                     // Status Bar
                     document.getElementById('response').innerHTML = "Reconstructing...";
                     document.getElementById('myProgress').style.visibility = "collapse";
                     setTimeout(function() { requestResult(loc); }, 500);
-                }
+                } 
             }).then(() => { return; });  // 🔹 IMPORTANTE: Evita que el flujo siga al siguiente .then()
-        } 
-        if (res.ok) {
-            document.getElementById("simProgress").style.visibility = "collapse";
-            document.getElementById('response').style.visibility    = "collapse";
-            document.getElementById('myProgress').style.visibility  = "collapse";
-            document.getElementById("myBar").style.width            = "0%";
+        } if (res.ok) {
+            clearSimulationPanel();
             return res.text();
-        }      
-        throw new Error('Request error');
+        } if (res.status == 500) {
+            clearSimulationPanel();
+            return res.json().then(json => {
+                document.getElementById("simErrorMsg").textContent = 
+                    "Simulation failed in KomaMRI: the provided sequence could not be simulated or reconstructed.\nDetails:\n" + json.msg;
+            }).then(() => { return; });
+        } throw new Error('Request error');
     })
     .then(html => {
         if (!html) return;
-        var iframe = document.getElementById("sim-result")
+        var iframe = document.getElementById("simResult")
         iframe.srcdoc = html;
         iframe.onload = function() {
             iframe.style.visibility = "visible";
@@ -103,6 +117,20 @@ function plot_seq(scanner_json, seq_json){
         width: document.getElementById("seq-diagram").offsetWidth,
     };
 
+    const iframe = document.getElementById("seq-diagram");
+    const errorBox = document.getElementById("seqErrorMsg");
+
+    iframe.style.visibility = "hidden";
+    document.getElementById("loading-seq").style.display = "block";   
+
+    // Crear listener temporal
+    const onIframeLoad = () => {
+        iframe.style.visibility = "visible";
+        iframe.removeEventListener("load", onIframeLoad);  // Evita múltiples disparos
+    };
+
+    iframe.addEventListener("load", onIframeLoad);
+
     fetch("/plot", {
         method: "POST",
         headers: {
@@ -112,20 +140,24 @@ function plot_seq(scanner_json, seq_json){
         body: JSON.stringify(combinedObj)
     })
     .then(res => {
+        document.getElementById("loading-seq").style.display = "none";
+
         if (res.ok) {
             return res.text();
         } else {
-            throw new Error('Error en la solicitud');
+            return res.json().then(json => {
+                throw new Error(json.msg);
+            });
         }
     })
     .then(html => {
-        // Establecer el contenido del iframe con el HTML recibido
-        var iframe = document.getElementById("seq-diagram")
         iframe.srcdoc = html;
-        iframe.style.visibility = "visible";
+        errorBox.textContent = "";
     })
     .catch(error => {
-        console.error("Error en la solicitud:", error);
+        iframe.style.visibility = "hidden";
+        errorBox.textContent = 
+            "Failed to plot sequence: the provided sequence could not be plotted.\nDetails:\n" + error.message;
     });
 }
 
@@ -142,6 +174,5 @@ function logout() {
 
 function loadUser() {
     const userText = document.getElementById("user-menu-text");
-
     userText.innerHTML = "Hi, " + localStorage.username;
 }

@@ -44,7 +44,9 @@
     <div class="container">
         <div class="box col-6" id="screenSeq">
             <p class="title">Sequence Diagram</p>
-            <iframe class="content" id="seq-diagram" frameBorder="0" style="visibility: hidden; height: 98%; width:98%"></iframe>
+            <img id="loading-seq" class="loading content" src="assets/loading.gif" />
+            <iframe class="content" id="seq-diagram" frameBorder="0" style="visibility: hidden; height: 98%; width:98%; z-index:10"></iframe>
+            <p class="content error-msg" id="seqErrorMsg"></p>
         </div>
         <div class="box col-3" id="screen3DViewer">
             <img id="loading-vtk" class="loading content" src="assets/loading.gif" />    
@@ -59,7 +61,8 @@
                     <div id="myBar"></div>
                 </div>
             </div>
-            <iframe class="content" id="sim-result" frameBorder="0"></iframe>
+            <p class="content error-msg" id="simErrorMsg"><p>
+            <iframe class="content" id="simResult" frameBorder="0"></iframe>
         </div>
     </div>
 
