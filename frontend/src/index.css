@@ -185,7 +185,7 @@ html, body {
 }
 
 .box{
-    position:absolute;
+    position:fixed;
     top: var(--navbar-size);
 }
 
