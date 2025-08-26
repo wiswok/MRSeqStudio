@@ -2,16 +2,16 @@
 Basic gradient-echo (GRE) Sequence (12/02/2025)
 """
 function GRE(
-    FOV::Float64, 
-    N::Int, 
-    TE::Float64, 
-    TR::Float64, 
-    α, sys::Scanner; 
-    G=[0,0,1e-3], 
-    Δf=0,
+	FOV::Float64, 
+	N::Int, 
+	TE::Float64, 
+	TR::Float64, 
+	α, sys::Scanner; 
+	G=[0,0,1e-3], 
+	Δf=0,
 	pulse_duration = 3e-3,
 )
-    # Excitation (Sinc pulse) ----------------------------------
+	# Excitation (Sinc pulse) ----------------------------------
 	B_1° = 2.59947e-7 / (pulse_duration * 1e3)
 	B1 = α*  B_1°
 	EX = PulseDesigner.RF_sinc(-1im*B1,pulse_duration,sys;G=G,Δf=Δf)
@@ -66,7 +66,7 @@ function EPI(FOV::Real, N::Integer, sys::Scanner; Δt=sys.ADC_Δt)
 	Nx = Ny = N #Square acquisition
 	Δx = FOV/(Nx-1)
 	Ta = Δt*(Nx-1) #4-8 us
-    Δτ = Ta/(Ny-1)
+	Δτ = Ta/(Ny-1)
 	Ga = 1/(γ*Δt*FOV)
 	ζ = Ga / sys.Smax
 	if Ga > Gmax
@@ -76,8 +76,8 @@ function EPI(FOV::Real, N::Integer, sys::Scanner; Δt=sys.ADC_Δt)
 	ϵ1 = Δτ/(Δτ+ζ)
 	#EPI base
 	epi = Sequence(vcat(
-	    [mod(i,2)==0 ? Grad(Ga*(-1)^(i/2),Ta,ζ) : Grad(0.,Δτ,ζ) for i=0:2*Ny-2],  #Gx
-	 	[mod(i,2)==1 ? ϵ1*Grad(Ga,Δτ,ζ) :         Grad(0.,Ta,ζ) for i=0:2*Ny-2])) #Gy
+		[mod(i,2)==0 ? Grad(Ga*(-1)^(i/2),Ta,ζ) : Grad(0.,Δτ,ζ) for i=0:2*Ny-2],  #Gx
+		[mod(i,2)==1 ? ϵ1*Grad(Ga,Δτ,ζ) :         Grad(0.,Ta,ζ) for i=0:2*Ny-2])) #Gy
 	epi.ADC = [mod(i,2)==1 ? ADC(0,Δτ,ζ) : ADC(N,Ta,ζ) for i=0:2*Ny-2]
 	# Relevant parameters
 	Δfx_pix = 1/Ta
@@ -85,10 +85,11 @@ function EPI(FOV::Real, N::Integer, sys::Scanner; Δt=sys.ADC_Δt)
 	Δfx_pix_phase = 1/Δt_phase
 	#Pre-wind and wind gradients
 	ϵ2 = Ta/(Ta+ζ)
-    PHASE =   Sequence(reshape(1/2*[Grad(      -Ga, Ta, ζ); ϵ2*Grad(-Ga, Ta, ζ)],:,1)) #This needs to be calculated differently
+	PHASE =   Sequence(reshape(1/2*[Grad(      -Ga, Ta, ζ); ϵ2*Grad(-Ga, Ta, ζ)],:,1)) #This needs to be calculated differently
 	DEPHASE = Sequence(reshape(1/2*[Grad((-1)^N*Ga, Ta, ζ); ϵ2*Grad(-Ga, Ta, ζ)],:,1)) #for even N
 	seq = PHASE+epi+DEPHASE
 	#Saving parameters
 	seq.DEF = Dict("Nx"=>Nx,"Ny"=>Ny,"Nz"=>1,"Name"=>"epi")
 	return seq
 end
+

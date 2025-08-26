@@ -18,7 +18,6 @@ using DBInterface
 using SwaggerMarkdown
 using SHA
 using JWTs, MbedTLS
-using Serialization
 
 
 using StatsBase, FFTW
@@ -42,6 +41,20 @@ const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map",
                      "/register", "/", "/admin"]
 const PRIVATE_URLS = ["/simulate", "/plot"]
 
+#configuracion previa?
+# const AUTH_FILE  = "auth.txt"
+# const USERS_FILE = "users.txt"
+
+##configuracion base de datos
+const DB_CONFIG = Dict(
+    "host" => "10.10.10.100",  # Cambia por tu IP
+    "port" => 3307,
+    "database" => "MrSeq",
+    "user" => "root",
+    "password" => "Mistersecuencias88"
+)
+##cambiar la pass por algo menos nazi...
+
 global simID = 1
 global ACTIVE_SESSIONS = Dict{String, Int}()
 global SIM_PROGRESSES  = Dict{Int, Int}()
@@ -58,17 +71,11 @@ global SIM_METADATA = Dict{Int, Any}()
 # global result = nothing
 
 # ------------------------------ FUNCTIONS ------------------------------------
-
 @everywhere begin
-   ##No cambiar los includes de orden
-   include("db_core.jl")
-   include("auth_core.jl")
-   include("users_core.jl")
-   include("sequences_core.jl")
    include("api_utils.jl")
    include("mri_utils.jl")
-   include("admin_db.jl")
-   
+   include("users.jl")
+
    """Updates simulation progress and writes it in a file."""
    function KomaMRICore.update_blink_window_progress!(w::String, block, Nblocks)
       io = open(w,"w") # "w" mode overwrites last status value, even if it was not read yet
@@ -336,62 +343,81 @@ end
             description: Internal server error
 """
 @post "/simulate" function(req::HTTP.Request)
-   # Obtener información del usuario
-   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
-   username = claims(jwt2)["username"]
-   
-   # Verificar si el usuario puede ejecutar más secuencias hoy
-   if !user_can_run_more_sequences(username)
-      println("⛔ ACCESO DENEGADO: Se ha rechazado la solicitud de simulación de '$username' por exceder límite diario")
-      return HTTP.Response(403, ["Content-Type" => "application/json"],
-         JSON3.write(Dict("error" => "Has alcanzado tu límite diario de secuencias")))
-   end
-
-   # Configurar archivo de estado temporal
    STATUS_FILES[simID] = tempname()
    touch(STATUS_FILES[simID])
 
-   # Extraer datos de simulación
-   scanner_json   = json(req)["scanner"]
-   sequence_json  = json(req)["sequence"]
-   phantom_string = json(req)["phantom"]
+   json_data = normalize_keys(json(req))
+   scanner_json   = json_data["scanner"]
+   sequence_json  = json_data["sequence"]
+   phantom_string = json_data["phantom"]
 
-      # Generar un ID único para la secuencia
-   sequence_unique_id = "seq_$(now())_$(rand(1:10000))"
-   
-   # Guardar metadatos de la simulación
-   SIM_METADATA[simID] = Dict(
-      "username" => username,
-      "sequence_id" => sequence_unique_id,
-      "start_time" => now()
-   )
+   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+   username = claims(jwt2)["username"]
 
-   # Registrar el uso de secuencia
+   # Verificar límite diario de secuencias
+   if !user_can_run_more_sequences(username)
+      return HTTP.Response(429, ["Content-Type" => "application/json"],
+            JSON3.write(Dict("error" => "Has alcanzado tu límite diario de secuencias.")))
+   end
+
+   # Registrar el uso de la secuencia
    register_sequence_usage(username)
+
+   # Generar un sequence_id basado en la fecha y hora para la tabla results
+   timestamp = Dates.format(now(), "yyyymmdd_HHMMSSsss")
+   sequence_id = "seq_$(username)_$(timestamp)"
 
    if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
       assign_process(username) # We assign a new julia process to the user
    end
-   # Simulation  (asynchronous. It should not block the HTTP 202 Response)
+   
+   # Simulation (asynchronous. It should not block the HTTP 202 Response)
    SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID])
 
-   # while 1==1
-   #    io = open(statusFile,"r")
-   #    if (!eof(io))
-   #       global simProgress = read(io,Int32)
-   #       print("leido\n")
-   #    end
-   #    close(io)
-   #    print("Progreso: ", simProgress, '\n')
-   #    sleep(0.2)
-   # end
-
-   # TODO: Update simulation-process correspondence table
+   # Guardar información para cuando la simulación termine
+   sim_metadata = Dict(
+      "sequence_id" => sequence_id,
+      "username" => username
+   )
+   
+   SIM_METADATA[simID] = sim_metadata
 
    headers = ["Location" => string("/simulate/",simID)]
    global simID += 1
-   # 202: Partial Content
-   return HTTP.Response(202,headers)
+   
+   # Asíncrono: guardar resultado cuando termine la simulación
+   @async begin
+      local _simID = simID - 1
+      try
+         # Esperar a que termine la simulación
+         while true
+            sleep(0.5)
+            io = open(STATUS_FILES[_simID], "r")
+            progress = -1
+            if !eof(io)
+               progress = read(io, Int32)
+            end
+            close(io)
+            
+            # Si terminó (éxito o error), procesar
+            if progress == 101 || progress == -2
+               break
+            end
+         end
+         
+         # Obtener resultado y guardar
+         if SIM_PROGRESSES[_simID] == 101  # Simulación exitosa
+            result = fetch(SIM_RESULTS[_simID])
+            metadata = SIM_METADATA[_simID]
+            save_simulation_result(metadata["username"], metadata["sequence_id"], result)
+         end
+      catch e
+         println("Error guardando resultado de simulación: ", e)
+      end
+   end
+   
+   # 202: Accepted
+   return HTTP.Response(202, headers)
 end
 
 @swagger """
@@ -457,23 +483,6 @@ end
       width  = width  - 15
       height = height - 20
       im = fetch(SIM_RESULTS[_simID])      # TODO: once the simulation-process correspondence table is implemented, this will be replaced by the corresponding image 
-      
-      # Solo guardamos el resultado si no se ha guardado anteriormente
-      if haskey(SIM_METADATA, _simID) && !haskey(SIM_METADATA[_simID], "saved")
-         metadata = SIM_METADATA[_simID]
-         username = metadata["username"]
-         sequence_id = metadata["sequence_id"]
-         
-         # Intentar guardar el resultado (verifica internamente los límites de espacio)
-         save_result = save_simulation_result(username, sequence_id, im)
-         
-         # Marcar como guardado para evitar intentos repetidos
-         SIM_METADATA[_simID]["saved"] = save_result
-         if !save_result
-            println("⚠️ No se pudo guardar el resultado por exceder cuota de almacenamiento")
-         end
-      end
-
       p = plot_image(abs.(im[:,:,1]); darkmode=true, width=width, height=height)
       html_buffer = IOBuffer()
       KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
@@ -814,7 +823,7 @@ end
         return HTTP.Response(403)
     end
     
-    return delete_result(parse(Int, resultId), req)
+    return delete_result(parse(Int, resultId))
 end
 
 @get "/api/admin/stats/sequences" function(req::HTTP.Request)
@@ -955,29 +964,6 @@ end
     
     return update_sequence_usage(parse(Int, usageId), input_data["sequences_used"])
 end
-
-# Redirige /results a /results.html 
-@get "/results" function(req::HTTP.Request)
-   return HTTP.Response(301, ["Location" => "/results.html"])
-end
-
-# Endpoint para la API de resultados
-@get "/api/results" function(req)
-   username = get_user_from_jwt(req)
-   results = get_user_results(username)
-   return HTTP.Response(200, ["Content-Type" => "application/json"], JSON3.write(results))
-end
-
-@get "/api/results/{id}/download" function(req, id)
-    println("buscando id usuario")
-    username = get_user_from_jwt(req)
-    println("Descarga solicitada: usuario=$username, id=$id")
-    return download_simulation_result(username, parse(Int, id))
-end
-
-@delete "/api/results/{id}" function(req, id)
-    return delete_result(parse(Int, id), req)
-end
 # ---------------------------------------------------------------------------
 
 # title and version are required
@@ -989,7 +975,3 @@ swagger_document = build(openApi)
 setschema(swagger_document)
 
 serve(host="0.0.0.0",port=8000, middleware=[AuthMiddleware])
-
-
-
-

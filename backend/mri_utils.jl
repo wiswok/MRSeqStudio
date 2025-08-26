@@ -1,5 +1,3 @@
-include("Sequences.jl")
-
 "Convert a 1D vector with system paramaters into a KomaMRICore.Scanner object"
 vec_to_scanner(vec) = begin
    sys = Scanner()
@@ -69,21 +67,21 @@ mat_to_seq(mat,sys::Scanner) = begin
          AUX = (norm(cross_prod)>0) ? R*AUX : AUX
 
          if(mat[1,i]==4)
-             global N_x = trunc(Int,mat[10,i])
+            global N_x = trunc(Int,mat[10,i])
          end
 
          seq += AUX
 
 
       elseif mat[1,i] == 5 # EPI
-          FOV = mat[9,i]
-          N = trunc(Int,mat[10,i])
+         FOV = mat[9,i]
+         N = trunc(Int,mat[10,i])
 
-          EPI = PulseDesigner.EPI(FOV, N, sys)
-          EPI = (norm(cross_prod)>0) ? R*EPI : EPI
-          seq += EPI
+         EPI = PulseDesigner.EPI(FOV, N, sys)
+         EPI = (norm(cross_prod)>0) ? R*EPI : EPI
+         seq += EPI
 
-          N_x = N
+         N_x = N
       end
 
    end
@@ -181,7 +179,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
          elseif haskey(block, "duration") & haskey(rf, "b1Module")
             duration = eval_string(block["duration"], vars, iterators)  
             amplitude = eval_string(rf["b1Module"], vars, iterators)
-        
+      
          # Flip angle and amplitude
          elseif haskey(rf, "flipAngle") & haskey(rf, "b1Module")
             flipAngle = eval_string(rf["flipAngle"], vars, iterators)
@@ -363,6 +361,42 @@ sim(sequence_json, scanner_json, phantom, path) = begin
    end
 end
 
+"""
+   sim_with_limits(sequence_json, scanner_json, phantom_string, statusFile, username, sequence_id)
+
+Versión de la función de simulación que tiene en cuenta los límites de usuario
+"""
+function sim_with_limits(sequence_json, scanner_json, phantom_string, statusFile, username, sequence_id)
+   # Verificar límites antes de iniciar la simulación
+   if !user_can_run_more_sequences(username)
+      update_progress!(statusFile, -2)  # Marcar como error
+      return Dict("error" => "Límite diario de secuencias alcanzado")
+   end
+
+   # Registrar el uso de la secuencia
+   register_sequence_usage(username)
+   
+   # Ejecutar la simulación normal
+   result = sim(sequence_json, scanner_json, phantom_string, statusFile)
+   
+   # Calcular tamaño aproximado del resultado
+   # Este cálculo depende del tipo de resultado que genera la simulación
+   # Suponiendo que result es un array 3D
+   size_bytes = sizeof(result)
+   size_mb = size_bytes / (1024 * 1024)
+   
+   # Guardar el resultado si está dentro de los límites
+   save_result = save_simulation_result(username, sequence_id, result)
+   
+   if !save_result
+      println("⚠️ No se pudo guardar el resultado para $username - excede límite de almacenamiento")
+   else
+      println("✅ Resultado guardado para $username con ID $sequence_id")
+   end
+   
+   return result
+end
+
 function read_variables(json_variables::JSON3.Array)
    variables = Dict{String,Any}()
    for variable in json_variables
@@ -384,7 +418,7 @@ end
 "Eval a string expression and return the result"
 function eval_string(expr::String, variables::Dict, iterators::Dict{String,Int}=Dict{String,Int}())
    if expr == ""
-       return 0
+      return 0
    end
 
    allowed_operators = Set(["+", "-", "*", "/", "(", ")", "^"])
@@ -427,3 +461,4 @@ end
 #    end
 #    return key
 # end
+
