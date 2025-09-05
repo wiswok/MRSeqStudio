@@ -34,8 +34,7 @@ public_files_path  = string(@__DIR__, "/../public")
 dynamicfiles(dynamic_files_path, "/") 
 staticfiles(public_files_path, "/public")
 
-const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map",
-                     "/register", "/"]
+const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map", "/register", "/"]
 const PRIVATE_URLS = ["/simulate", "/plot"]
 
 const AUTH_FILE  = "auth.txt"
