@@ -8,7 +8,7 @@ Rectangle{
     color: "#492859"
 
     function applyPhantomChanges(){
-        const fileNames = ["brain_phantom2D", "brain_phantom3D", "pelvis_phantom2D"]
+        const fileNames = ["brain2D", "brain3D", "pelvis2D", "aorta3D"]
         backend.displayPhantom(fileNames[phantomInput.currentIndex])
     }
 
@@ -49,7 +49,7 @@ Rectangle{
         ComboBoxItem{
             id: phantomInput;
             idNumber: -3;
-            model: [ "Brain 2D", "Brain 3D", "Pelvis 2D" ]
+            model: [ "Brain 2D", "Brain 3D", "Pelvis 2D", "Aorta 3D" ]
         } 
     }
 

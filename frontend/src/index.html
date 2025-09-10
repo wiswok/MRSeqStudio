@@ -49,12 +49,28 @@
             <p class="content error-msg" id="seqErrorMsg"></p>
         </div>
         <div class="box col-3" id="screen3DViewer">
-            <img id="loading-vtk" class="loading content" src="assets/loading.gif" />    
+            <div style="position: absolute; right: 10px; top: 10px; z-index: 20; display: flex; gap: 8px; align-items: center;">
+                <label for="mapToggle">Map:</label>
+                <select id="mapToggle">
+                    <option value="T1" selected>T1</option>
+                    <option value="T2">T2</option>
+                    <option value="PD">PD</option>
+                    <option value="dw">Δw</option>
+                </select>
+                <label for="viewerToggle">Viewer:</label>
+                <select id="viewerToggle">
+                    <option value="slices" selected>Slices</option>
+                    <option value="volume">Volume</option>
+                </select>
+            </div>
+            <img id="loading-viewer" class="loading content" src="assets/loading.gif" />    
             <div id="VTKjs" style="width:100%; height:100%"></div>
-            <p class="title">3D Slice Viewer</p>
+            <iframe class="content" id="phantom" frameBorder="0" style="visibility: hidden; height: 98%; width:98%; z-index:10"></iframe>
+            <p class="title">Phantom Viewer</p>
         </div>
         <div class="box col-3" id="screenSimulator">
             <p class="title">Simulation Result</p>
+            <img id="loading-sim" class="loading content" src="assets/loading.gif" style="display: none;" />
             <div id="simProgress" width="90%">
                 <p id="response"></p>
                 <div id="myProgress">

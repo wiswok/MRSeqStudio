@@ -319,17 +319,7 @@ recon(raw_signal, seq) = begin
 end
 
 "Obtain raw RM signal. Input arguments are a 2D matrix (sequence) and a 1D vector (system parameters)"
-sim(sequence_json, scanner_json, phantom, path) = begin
-   # Phantom
-   if phantom     == "Brain 2D"
-      phant = KomaMRI.brain_phantom2D()
-   elseif phantom == "Brain 3D"
-      phant = KomaMRI.brain_phantom3D(; ss=3, start_end=[1, 360])
-   elseif phantom == "Pelvis 2D"
-      phant = KomaMRI.pelvis_phantom2D()
-   end
-   phant.Δw .= 0
-
+sim(phantom, sequence_json, scanner_json, path) = begin
    # Scanner
    sys = json_to_scanner(scanner_json)
 
@@ -342,7 +332,7 @@ sim(sequence_json, scanner_json, phantom, path) = begin
    # Simulation
    raw_signal = 0
    try
-      raw_signal = simulate(phant, seq, sys; sim_params=simParams, w=path)
+      raw_signal = simulate(phantom, seq, sys; sim_params=simParams, w=path)
    catch e
       println("Simulation failed")
       display(e)
@@ -415,15 +405,3 @@ function eval_string(expr::String, variables::Dict, iterators::Dict{String,Int}=
       error("Error evaluating expression: $(err)")
    end
 end
-
-# function load_secret_key(file_path::String="secret_key.txt")
-#    if !isfile(file_path)
-#       error("Secret key file not found: $file_path")
-#    else
-#       key = read(file_path, String)
-#       if key == "this_is_a_sample_secret_key_do_not_use_this_in_production_please_generate_your_own"
-#          @warn "Using the default secret key. Please change it for production use."
-#       end
-#    end
-#    return key
-# end

@@ -41,6 +41,7 @@ function clearSimulationPanel() {
     document.getElementById('myProgress').style.visibility  = "collapse";
     document.getElementById("myBar").style.width            = "0%";
     document.getElementById("simErrorMsg").innerHTML          = "";
+    document.getElementById('loading-sim').style.display    = "none";
 }
 
 function requestResult(loc){
@@ -58,6 +59,7 @@ function requestResult(loc){
             // Caso en que se recibe un 303 (redirect)
             document.getElementById("simProgress").style.visibility = "visible";
             document.getElementById('response').style.visibility    = "visible";
+            document.getElementById('loading-sim').style.display    = "block";
             
             return res.json().then(json => {
                 if (json === -1) {
@@ -66,7 +68,7 @@ function requestResult(loc){
                     //Error
                     setTimeout(function() { requestResult(loc); }, 500);
                 } else {
-                    // Status Bar
+                    // Status Bar 
                     document.getElementById('response').innerHTML = json + "%";
                     document.getElementById('myProgress').style.visibility = "visible";
                     var elem = document.getElementById("myBar");
@@ -75,7 +77,6 @@ function requestResult(loc){
                 if (json > -2 && json < 100) {
                     setTimeout(function() { requestResult(loc); }, 500);
                 } else if (json === 100) {
-                    // Status Bar
                     document.getElementById('response').innerHTML = "Reconstructing...";
                     document.getElementById('myProgress').style.visibility = "collapse";
                     setTimeout(function() { requestResult(loc); }, 500);
@@ -97,6 +98,7 @@ function requestResult(loc){
         var iframe = document.getElementById("simResult")
         iframe.srcdoc = html;
         iframe.onload = function() {
+            document.getElementById('loading-sim').style.display = "none";
             iframe.style.visibility = "visible";
         };
     })
@@ -131,7 +133,7 @@ function plot_seq(scanner_json, seq_json){
 
     iframe.addEventListener("load", onIframeLoad);
 
-    fetch("/plot", {
+    fetch("/plot_sequence", {
         method: "POST",
         headers: {
             "Content-type": "application/json",

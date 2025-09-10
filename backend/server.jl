@@ -29,13 +29,13 @@ using StructTypes
 end
 
 dynamic_files_path = string(@__DIR__, "/../frontend/dist")
-public_files_path  = string(@__DIR__, "/../public")
+phantom_files_path = string(@__DIR__, "/phantoms")
 
 dynamicfiles(dynamic_files_path, "/") 
-staticfiles(public_files_path, "/public")
+staticfiles(phantom_files_path, "/public")
 
 const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map", "/register", "/"]
-const PRIVATE_URLS = ["/simulate", "/plot"]
+const PRIVATE_URLS = ["/simulate", "/plot_sequence", "/plot_phantom"]
 
 const AUTH_FILE  = "auth.txt"
 const USERS_FILE = "users.txt"
@@ -45,6 +45,7 @@ global ACTIVE_SESSIONS = Dict{String, Int}()
 global SIM_PROGRESSES  = Dict{Int, Int}()
 global SIM_RESULTS     = Dict{Int, Any}()
 global STATUS_FILES    = Dict{Int, String}()
+global PHANTOMS        = Dict{Int, Phantom}()       
 
 # ---------------------------- GLOBAL VARIABLES --------------------------------
 # These won't be necessary once the simulation-process 
@@ -319,7 +320,9 @@ end
       assign_process(username) # We assign a new julia process to the user
    end
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
-   SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID])
+   pid = ACTIVE_SESSIONS[username]
+   phantom = PHANTOMS[pid]
+   SIM_RESULTS[simID] = @spawnat pid sim(phantom, sequence_json, scanner_json, STATUS_FILES[simID])
 
    # while 1==1
    #    io = open(statusFile,"r")
@@ -456,10 +459,10 @@ end
 
 # PLOT SEQUENCE
 @swagger """
-/plot:
+/plot_sequence:
    post:
       tags:
-      - plot
+      - plot_sequence
       summary: Plot a sequence
       description: Plot a sequence
       requestBody:
@@ -575,7 +578,7 @@ end
          '500':
             description: Internal server error
 """
-@post "/plot" function(req::HTTP.Request)
+@post "/plot_sequence" function(req::HTTP.Request)
    try
       scanner_data = json(req)["scanner"]
       seq_data     = json(req)["sequence"]
@@ -584,6 +587,39 @@ end
       sys = json_to_scanner(scanner_data)
       seq = json_to_sequence(seq_data, sys)
       p = plot_seq(seq; darkmode=true, width=width, height=height, slider=height>275)
+      html_buffer = IOBuffer()
+      KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
+      return HTTP.Response(200,body=take!(html_buffer))
+   catch e
+      return HTTP.Response(500,body=JSON3.write(e))
+   end
+end
+
+## SELECT AND PLOT PHANTOM
+@post "/plot_phantom" function(req::HTTP.Request)
+   input_data = json(req)
+   phantom_string = input_data["phantom"]
+   map_str = input_data["map"]
+   map = map_str == "PD" ? :ρ  : 
+         map_str == "dw" ? :Δw : 
+         map_str == "T1" ? :T1 : 
+         map_str == "T2" ? :T2 : map_str
+   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+   username = claims(jwt2)["username"]
+
+   if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
+      assign_process(username) # We assign a new julia process to the user
+   end
+   try
+      phantom_path = "phantoms/$phantom_string/$phantom_string.phantom"
+      obj = read_phantom(phantom_path)
+      PHANTOMS[ACTIVE_SESSIONS[username]] = obj
+
+      width  = json(req)["width"]  - 15
+      height = json(req)["height"] - 15
+      time_samples = obj.name == "Aorta" ? 100 : 1;
+      ss           = obj.name == "Aorta" ? 100 : 1;
+      p = plot_phantom_map(obj[1:ss:end], map; darkmode=true, width=width, height=height, time_samples=time_samples)
       html_buffer = IOBuffer()
       KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
       return HTTP.Response(200,body=take!(html_buffer))

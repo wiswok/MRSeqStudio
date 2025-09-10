@@ -10,3 +10,6 @@ backend/users.txt
 *.pem
 jwkkey.json
 jwkpub.json
+*.nii.gz
+*.mat
+*.phantom
