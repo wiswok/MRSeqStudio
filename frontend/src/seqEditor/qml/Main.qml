@@ -562,9 +562,9 @@ ApplicationWindow {
     // -1:         scanner panel
     // 0,1,2,3...: sequence block panel
     function applyChanges(idNumber){
-        if (idNumber === variablesMenu.menuID){       // Apply changes to the variables panel
-            variablesMenu.applyVariablesChanges();
-        } if (idNumber >= 0){                         // Apply changes to the sequence block panel
+        // Variables (idNumber < 0) are now handled directly by each TextInputItem
+        // No need to call applyVariablesChanges() anymore
+        if (idNumber >= 0){                         // Apply changes to the sequence block panel
             configMenu.applyBlockChanges(idNumber); 
         } if (idNumber === -3) {
             simulatorMenu.applyPhantomChanges();
@@ -574,29 +574,47 @@ ApplicationWindow {
     // function evalExpression() evaluates a mathematical expression which can contain variable names
     function evalExpression(expression) {
         try {
-            if (expression === "") {
+            if (expression === "" || expression === null || expression === undefined) {
                 return 0;
-            }
+            }  
             // Convertir variablesList en un objeto de variables
             let variables = {};
             for (let i = 0; i < variablesList.count; i++) {
                 let item = variablesList.get(i);
-                variables[item.name] = item.value;
+                if (item && item.name && item.value !== undefined) {
+                    variables[item.name] = item.value;
+                }
             }
 
             // Reemplazar nombres de variables en la expresión con sus valores
             let replacedExpression = expression.replace(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g, match => {
                 if (variables.hasOwnProperty(match)) {
-                    return variables[match]; // Sustituir por el valor de la variable
+                    let value = variables[match];
+                    // Ensure the value is a valid number
+                    if (isNaN(value) || !isFinite(value)) {
+                        console.warn("Variable '" + match + "' has invalid value: " + value);
+                        return "0";
+                    }
+                    return value; // Sustituir por el valor de la variable
                 } else {
-                    return NaN
+                    console.warn("Variable '" + match + "' not found in variables list");
+                    return "0"; // Use 0 instead of NaN to prevent propagation
                 }
             });
 
             // Evaluar la expresión matemática
-            return new Function(`return (${replacedExpression});`)();
+            let result = new Function(`return (${replacedExpression});`)();
+            
+            // Validate the result
+            if (isNaN(result) || !isFinite(result)) {
+                console.warn("Expression evaluation resulted in invalid value: " + expression);
+                return 0;
+            }
+            
+            return result;
         } catch (error) {
-            return `Error: ${error.message}`;
+            console.error("Error evaluating expression '" + expression + "': " + error.message);
+            return 0; // Return 0 instead of error string to prevent NaN propagation
         }
     }
 
