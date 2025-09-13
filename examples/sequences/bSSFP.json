@@ -19,21 +19,18 @@
                 },
                 {
                     "number": 6
-                },
-                {
-                    "number": 7
                 }
             ],
             "cod": 0,
             "iterator": "i",
             "name": "TR",
             "ngroups": 0,
-            "repetitions": "N"
+            "repetitions": "N_matrix"
         },
         {
             "children": [],
             "cod": 1,
-            "duration": "RF1_dur",
+            "duration": "RF_dur",
             "gradients": [
                 {
                     "amplitude": "0",
@@ -50,11 +47,11 @@
                     "rise": "0"
                 },
                 {
-                    "amplitude": "G_ss",
+                    "amplitude": "Gss",
                     "axis": "z",
                     "delay": "0",
-                    "flatTop": "RF1_dur",
-                    "rise": "rise_phase"
+                    "flatTop": "RF_dur",
+                    "rise": "phase_rise"
                 }
             ],
             "name": "",
@@ -62,7 +59,7 @@
             "rf": [
                 {
                     "deltaf": "0",
-                    "flipAngle": "90",
+                    "flipAngle": "flip_angle",
                     "shape": 1
                 }
             ]
@@ -72,25 +69,25 @@
             "cod": 3,
             "gradients": [
                 {
-                    "amplitude": "G_phase/2",
+                    "amplitude": "-Gphase/2",
                     "axis": "x",
                     "delay": "0",
-                    "flatTop": "flat_top_phase",
-                    "rise": "rise_phase"
+                    "flatTop": "RF_dur/2",
+                    "rise": "phase_rise"
                 },
                 {
-                    "amplitude": "G_phase/2 - i*G_phase/(N-1)",
+                    "amplitude": "-Gphase/2 + i*step",
                     "axis": "y",
                     "delay": "0",
-                    "flatTop": "flat_top_phase",
-                    "rise": "rise_phase"
+                    "flatTop": "RF_dur/2",
+                    "rise": "phase_rise"
                 },
                 {
-                    "amplitude": "-G_ss",
+                    "amplitude": "-Gss",
                     "axis": "z",
                     "delay": "0",
-                    "flatTop": "flat_top_phase",
-                    "rise": "rise_phase"
+                    "flatTop": "RF_dur/2",
+                    "rise": "phase_rise"
                 }
             ],
             "name": "",
@@ -99,66 +96,22 @@
         {
             "children": [],
             "cod": 2,
-            "duration": "TE/2 - (RF1_dur/2 + RF2_dur/2 + flat_top_phase + 4*rise_phase)",
+            "duration": "delay_TR/2",
             "name": "",
             "ngroups": 1
         },
         {
-            "children": [],
-            "cod": 1,
-            "duration": "RF2_dur",
-            "gradients": [
-                {
-                    "amplitude": "0",
-                    "axis": "x",
-                    "delay": "0",
-                    "flatTop": "0",
-                    "rise": "0"
-                },
-                {
-                    "amplitude": "0",
-                    "axis": "y",
-                    "delay": "0",
-                    "flatTop": "0",
-                    "rise": "0"
-                },
-                {
-                    "amplitude": "G_ss",
-                    "axis": "z",
-                    "delay": "0",
-                    "flatTop": "RF2_dur",
-                    "rise": "rise_phase"
-                }
-            ],
-            "name": "",
-            "ngroups": 1,
-            "rf": [
-                {
-                    "deltaf": "0",
-                    "flipAngle": "180",
-                    "shape": 1
-                }
-            ]
-        },
-        {
-            "children": [],
-            "cod": 2,
-            "duration": "TE/2 - (RF2_dur/2 + rise_phase + ACQ_dur/2 + rise_ro)",
-            "name": "",
-            "ngroups": 1
-        },
-        {
-            "adcDelay": "rise_ro",
+            "adcDelay": "ro_rise",
             "children": [],
             "cod": 4,
             "duration": "ACQ_dur",
             "gradients": [
                 {
-                    "amplitude": "G_ro",
+                    "amplitude": "Gro",
                     "axis": "x",
                     "delay": "0",
                     "flatTop": "ACQ_dur",
-                    "rise": "rise_ro"
+                    "rise": "ro_rise"
                 },
                 {
                     "amplitude": "0",
@@ -177,17 +130,46 @@
             ],
             "name": "",
             "ngroups": 1,
-            "samples": "N"
+            "samples": "64"
         },
         {
             "children": [],
             "cod": 2,
-            "duration": "TR - (TE + RF1_dur/2 + ACQ_dur/2 + rise_phase + rise_ro)",
+            "duration": "delay_TR/2",
+            "name": "",
+            "ngroups": 1
+        },
+        {
+            "children": [],
+            "cod": 3,
+            "gradients": [
+                {
+                    "amplitude": "-Gphase/2",
+                    "axis": "x",
+                    "delay": "0",
+                    "flatTop": "RF_dur/2",
+                    "rise": "phase_rise"
+                },
+                {
+                    "amplitude": "Gphase/2 - i*step",
+                    "axis": "y",
+                    "delay": "0",
+                    "flatTop": "RF_dur/2",
+                    "rise": "phase_rise"
+                },
+                {
+                    "amplitude": "-Gss",
+                    "axis": "z",
+                    "delay": "0",
+                    "flatTop": "RF_dur/2",
+                    "rise": "phase_rise"
+                }
+            ],
             "name": "",
             "ngroups": 1
         }
     ],
-    "description": "Spin echo\n\n                            TE (ms)         TR (ms)\nT1-Weighted         10-30           300-800      \nPD-Weighted         10-30           >=2000\nT2-Weighted         70-120         >=2000\n\n",
+    "description": "Write Here\n...\n...",
     "variables": [
         {
             "expression": "42.5774688e6",
@@ -196,94 +178,94 @@
             "value": 42577468.8
         },
         {
-            "expression": "10e-3",
-            "name": "A",
+            "expression": "0.03",
+            "name": "FOV",
             "readonly": false,
-            "value": 0.01
+            "value": 0.03
         },
         {
             "expression": "64",
-            "name": "N",
+            "name": "N_matrix",
             "readonly": false,
             "value": 64
         },
         {
-            "expression": "0.23",
-            "name": "FOV",
-            "readonly": false,
-            "value": 0.23
-        },
-        {
-            "expression": "20e-3",
-            "name": "TE",
-            "readonly": false,
-            "value": 0.02
-        },
-        {
-            "expression": "800e-3",
+            "expression": "30e-3",
             "name": "TR",
             "readonly": false,
-            "value": 0.8
+            "value": 0.03
         },
         {
-            "expression": "(N-1)/FOV",
-            "name": "FOVk",
+            "expression": "20",
+            "name": "flip_angle",
             "readonly": false,
-            "value": 273.9130434782609
+            "value": 20
         },
         {
-            "expression": "1e-4",
-            "name": "rise_phase",
-            "readonly": false,
-            "value": 0.0001
-        },
-        {
-            "expression": "1e-3",
-            "name": "flat_top_phase",
-            "readonly": false,
-            "value": 0.001
-        },
-        {
-            "expression": "20e-3",
-            "name": "G_ss",
-            "readonly": false,
-            "value": 0.02
-        },
-        {
-            "expression": "FOVk/(gamma*(rise_phase+flat_top_phase))",
-            "name": "G_phase",
-            "readonly": false,
-            "value": 0.005848442021699277
-        },
-        {
-            "expression": "TE/4",
-            "name": "ACQ_dur",
-            "readonly": false,
-            "value": 0.005
-        },
-        {
-            "expression": "FOVk/(gamma*ACQ_dur)",
-            "name": "G_ro",
-            "readonly": false,
-            "value": 0.001286657244773841
-        },
-        {
-            "expression": "1e-4",
-            "name": "rise_ro",
-            "readonly": false,
-            "value": 0.0001
-        },
-        {
-            "expression": "2*flat_top_phase",
-            "name": "RF1_dur",
+            "expression": "2e-3",
+            "name": "RF_dur",
             "readonly": false,
             "value": 0.002
         },
         {
-            "expression": "RF1_dur/2",
-            "name": "RF2_dur",
+            "expression": "60e-3",
+            "name": "Gmax",
             "readonly": false,
-            "value": 0.001
+            "value": 0.06
+        },
+        {
+            "expression": "1e-4",
+            "name": "phase_rise",
+            "readonly": false,
+            "value": 0.0001
+        },
+        {
+            "expression": "5e-3",
+            "name": "Gss",
+            "readonly": false,
+            "value": 0.005
+        },
+        {
+            "expression": "0.5*Gmax",
+            "name": "Gro",
+            "readonly": false,
+            "value": 0.03
+        },
+        {
+            "expression": "500",
+            "name": "Smax",
+            "readonly": false,
+            "value": 500
+        },
+        {
+            "expression": "Gro / Smax",
+            "name": "ro_rise",
+            "readonly": false,
+            "value": 5.9999999999999995e-05
+        },
+        {
+            "expression": "(N_matrix-1)*(1/FOV)/(gamma*(RF_dur/2+phase_rise))",
+            "name": "Gphase",
+            "readonly": false,
+            "value": 0.044838055499694454
+        },
+        {
+            "expression": "(1/FOV)/(gamma*(RF_dur/2+phase_rise))",
+            "name": "step",
+            "readonly": false,
+            "value": 0.0007117151666618168
+        },
+        {
+            "expression": "((N_matrix-1)*(1/FOV)/(gamma * Gro)) - ro_rise",
+            "name": "ACQ_dur",
+            "readonly": false,
+            "value": 0.001584062034988797
+        },
+        {
+            "expression": "TR - (6*phase_rise + 2*RF_dur + 2*ro_rise + ACQ_dur)",
+            "name": "delay_TR",
+            "readonly": false,
+            "value": 0.023695937965011203
         }
     ]
 }
