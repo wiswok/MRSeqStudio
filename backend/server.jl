@@ -613,12 +613,15 @@ end
    try
       phantom_path = "phantoms/$phantom_string/$phantom_string.phantom"
       obj = read_phantom(phantom_path)
+      obj.Δw .= 0
       PHANTOMS[ACTIVE_SESSIONS[username]] = obj
 
       width  = json(req)["width"]  - 15
       height = json(req)["height"] - 15
-      time_samples = obj.name == "Aorta" ? 100 : 1;
-      ss           = obj.name == "Aorta" ? 100 : 1;
+      time_samples = obj.name == "Aorta"         ? 100 : 
+                     obj.name == "Flow Cylinder" ? 50  : 2;
+      ss           = obj.name == "Aorta"         ? 100 : 
+                     obj.name == "Flow Cylinder" ? 100 : 1;
       p = plot_phantom_map(obj[1:ss:end], map; darkmode=true, width=width, height=height, time_samples=time_samples)
       html_buffer = IOBuffer()
       KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
