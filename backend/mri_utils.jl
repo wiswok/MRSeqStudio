@@ -247,9 +247,9 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
 
          N_x = eval_string(block["samples"], vars, iterators)
 
-         EPI = PulseDesigner.EPI(fov, lines, sys)
+         epi = EPI(fov, lines, sys)
 
-         seq += EPI
+         seq += epi
 
       elseif block["cod"] == 6       # <-------------------------- GRE  
          # print("GRE\n")
