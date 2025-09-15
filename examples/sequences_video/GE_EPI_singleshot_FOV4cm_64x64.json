@@ -83,7 +83,7 @@
             "samples": "N_matrix"
         }
     ],
-    "description": "EPI single-shot  \n64 x 64              FOV 20 cm      \nFlip angle 20º    TE 30 ms\n",
+    "description": "GE-EPI single-shot  \n64 x 64              FOV 4 cm      \nFlip angle 20º    \n",
     "variables": [
         {
             "expression": "42.5774688e6",
@@ -104,10 +104,10 @@
             "value": 64
         },
         {
-            "expression": "0.2",
+            "expression": "0.04",
             "name": "FOV",
             "readonly": false,
-            "value": 0.2
+            "value": 0.04
         }
     ]
 }

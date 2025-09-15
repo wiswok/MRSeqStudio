@@ -28,7 +28,7 @@
             "iterator": "i",
             "name": "TR",
             "ngroups": 0,
-            "repetitions": "N"
+            "repetitions": "N_matrix"
         },
         {
             "children": [],
@@ -79,7 +79,7 @@
                     "rise": "rise_phase"
                 },
                 {
-                    "amplitude": "G_phase/2 - i*G_phase/(N-1)",
+                    "amplitude": "G_phase/2 - i*G_phase/(N_matrix-1)",
                     "axis": "y",
                     "delay": "0",
                     "flatTop": "flat_top_phase",
@@ -178,7 +178,7 @@
             ],
             "name": "",
             "ngroups": 1,
-            "samples": "N"
+            "samples": "N_matrix"
         },
         {
             "children": [],
@@ -204,7 +204,7 @@
         },
         {
             "expression": "64",
-            "name": "N",
+            "name": "N_matrix",
             "readonly": false,
             "value": 64
         },
@@ -227,7 +227,7 @@
             "value": 0.8
         },
         {
-            "expression": "(N-1)/FOV",
+            "expression": "(N_matrix-1)/FOV",
             "name": "FOVk",
             "readonly": false,
             "value": 273.9130434782609

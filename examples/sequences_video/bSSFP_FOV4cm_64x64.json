@@ -179,16 +179,22 @@
             "value": 42577468.8
         },
         {
-            "expression": "0.215",
-            "name": "FOV",
+            "expression": "10e-3",
+            "name": "A",
             "readonly": false,
-            "value": 0.215
+            "value": 0.01
         },
         {
             "expression": "64",
             "name": "N_matrix",
             "readonly": false,
             "value": 64
+        },
+        {
+            "expression": "0.04",
+            "name": "FOV",
+            "readonly": false,
+            "value": 0.04
         },
         {
             "expression": "30e-3",
@@ -236,13 +242,13 @@
             "expression": "1/FOV",
             "name": "dk",
             "readonly": false,
-            "value": 4.651162790697675
+            "value": 25
         },
         {
             "expression": "(N_matrix - 1)*dk",
             "name": "FOVk",
             "readonly": false,
-            "value": 293.0232558139535
+            "value": 1575
         },
         {
             "expression": "2e-3",
@@ -254,31 +260,31 @@
             "expression": "FOVk/(gamma*ACQ_dur)",
             "name": "Gro",
             "readonly": false,
-            "value": 0.0034410600732323656
+            "value": 0.018495697893623965
         },
         {
             "expression": "Gro / Smax",
             "name": "ro_rise",
             "readonly": false,
-            "value": 6.882120146464731e-06
+            "value": 3.699139578724793e-05
         },
         {
             "expression": "ACQ_dur - ro_rise",
             "name": "Tro",
             "readonly": false,
-            "value": 0.0019931178798535355
+            "value": 0.001963008604212752
         },
         {
             "expression": "FOVk/(gamma*(RF_dur/2+phase_rise))",
             "name": "Gphase",
             "readonly": false,
-            "value": 0.006256472860422482
+            "value": 0.033628541624770844
         },
         {
             "expression": "dk/(gamma*(RF_dur/2+phase_rise))",
             "name": "step",
             "readonly": false,
-            "value": 9.930909302257908e-05
+            "value": 0.0005337863749963626
         },
         {
             "expression": "TR - (6*phase_rise + 2*RF_dur + ACQ_dur)",
