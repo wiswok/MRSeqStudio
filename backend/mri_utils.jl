@@ -384,7 +384,7 @@ function eval_string(expr::String, variables::Dict, iterators::Dict{String,Int}=
 
    tokens = eachmatch(r"[a-zA-Z_][a-zA-Z0-9_]*|\d+\.?\d*(?:[eE][+-]?\d+)?|[()+\-*/^]", expr)
 
-   all_vars = merge(variables, iterators)
+   all_vars = merge(variables, iterators, Dict("pi" => pi))
 
    rebuilt = String[]
    for token in tokens
