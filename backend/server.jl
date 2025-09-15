@@ -249,6 +249,7 @@ end
                         },
                         {
                            "adcDelay": 0,
+                           "adcPhase": 0,
                            "children": [],
                            "cod": 4,
                            "duration": 1e-3,
@@ -531,6 +532,7 @@ end
                         },
                         {
                            "adcDelay": 0,
+                           "adcPhase": 0,
                            "children": [],
                            "cod": 4,
                            "duration": 1e-3,

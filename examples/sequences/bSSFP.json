@@ -102,6 +102,7 @@
         },
         {
             "adcDelay": "ro_rise",
+            "adcPhase": "(i-1)*pi",
             "children": [],
             "cod": 4,
             "duration": "ACQ_dur",

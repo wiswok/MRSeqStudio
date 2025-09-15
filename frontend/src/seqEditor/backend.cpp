@@ -24,7 +24,7 @@ QByteArray Backend::processJSONSequence(QByteArray data){
         bool durationActive = this->active(code,{1, 2, 4});
         bool linesActive = this->active(code,{5, 6});
         bool samplesActive = this->active(code,{4, 5, 6});
-        bool adcDelayActive = this->active(code,{4});
+        bool adcActive = this->active(code,{4});
         bool fovActive = this->active(code,{5, 6});
         bool rfActive = this->active(code,{1, 6});
         bool gradientsActive = this->active(code,{1, 3, 4});
@@ -67,8 +67,9 @@ QByteArray Backend::processJSONSequence(QByteArray data){
             block.erase("samples");
         }
 
-        if(!adcDelayActive){
+        if(!adcActive){
             block.erase("adcDelay");
+            block.erase("adcPhase");
         }
 
         if(!fovActive){
@@ -128,7 +129,7 @@ QByteArray Backend::parseJSONSequenceToQML(QByteArray data){
         bool durationActive = this->active(code,{1, 2, 4});
         bool linesActive = this->active(code,{5, 6});
         bool samplesActive = this->active(code,{4, 5, 6});
-        bool adcDelayActive = this->active(code,{4});
+        bool adcActive = this->active(code,{4});
         bool fovActive = this->active(code,{5, 6});
         bool rfActive = this->active(code,{1, 6});
         bool gradientsActive = this->active(code,{1, 3, 4});
@@ -167,8 +168,9 @@ QByteArray Backend::parseJSONSequenceToQML(QByteArray data){
             qmlData.append("        lines: " + block["lines"].dump() + " \n");
         }
 
-        if(adcDelayActive){
+        if(adcActive){
             qmlData.append("        adcDelay: " + block["adcDelay"].dump() + " \n");
+            qmlData.append("        adcPhase: " + block["adcPhase"].dump() + " \n");
         }
 
         if(samplesActive){

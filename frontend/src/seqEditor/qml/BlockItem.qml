@@ -35,7 +35,7 @@ Item{
         configMenu.durationVisible =    [1,2,4].includes(cod);
         configMenu.linesVisible =       [5,6].includes(cod);
         configMenu.samplesVisible =     [4,5,6].includes(cod);
-        configMenu.adcDelayVisible =    [4].includes(cod);
+        configMenu.adcVisible =         [4].includes(cod);
         configMenu.fovVisible =         [5,6].includes(cod);
         configMenu.rfVisible =          [1,6].includes(cod);
         configMenu.gradientsVisible =   [1,3,4].includes(cod);
@@ -51,8 +51,9 @@ Item{
         if(configMenu.samplesVisible){
             configMenu.samples =       blockList.get(index).samples
         }
-        if(configMenu.adcDelayVisible){
+        if(configMenu.adcVisible){
             configMenu.adcDelay =      blockList.get(index).adcDelay
+            configMenu.adcPhase =      blockList.get(index).adcPhase
         }
         if(configMenu.fovVisible){
             configMenu.fov =       blockList.get(index).fov

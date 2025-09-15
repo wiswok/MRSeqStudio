@@ -209,7 +209,7 @@ ApplicationWindow {
             var durationActive =    [1,2,3,4].includes(code);
             var linesActive =       [5,6].includes(code);
             var samplesActive =     [4,5,6].includes(code);
-            var adcDelayActive =    [4].includes(code);
+            var adcActive =         [4].includes(code);
             var fovActive =         [5,6].includes(code);
             var rfActive =          [1,6].includes(code);
             var gradientsActive =   [1,3,4].includes(code);
@@ -228,7 +228,8 @@ ApplicationWindow {
             if(durationActive)  {groupList.setProperty(groupList.count-1,           "duration",     blockList.get(blockID+j).duration);}
             if(linesActive)     {groupList.setProperty(groupList.count-1,           "lines",        blockList.get(blockID+j).lines);}
             if(samplesActive)   {groupList.setProperty(groupList.count-1,           "samples",      blockList.get(blockID+j).samples);}
-            if(adcDelayActive)  {groupList.setProperty(groupList.count-1,           "adcDelay",     blockList.get(blockID+j).adcDelay);}
+            if(adcActive)       {groupList.setProperty(groupList.count-1,           "adcDelay",     blockList.get(blockID+j).adcDelay);
+                                 groupList.setProperty(groupList.count-1,           "adcPhase",     blockList.get(blockID+j).adcPhase);}
             if(fovActive)       {groupList.setProperty(groupList.count-1,           "fov",          blockList.get(blockID+j).fov);}
             if(rfActive)        {groupList.get(groupList.count-1).rf.append(       {"select":       blockList.get(blockID+j).rf.get(0).select,
                                                                                     "shape":        blockList.get(blockID+j).rf.get(0).shape,

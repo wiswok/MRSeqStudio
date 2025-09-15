@@ -232,6 +232,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
             DEPHASE.ADC[1].N = eval_string(block["samples"], vars, iterators)
             DEPHASE.ADC[1].T = eval_string(block["duration"], vars, iterators)
             DEPHASE.ADC[1].delay = eval_string(block["adcDelay"], vars, iterators)
+            DEPHASE.ADC[1].ϕ = eval_string(block["adcPhase"], vars, iterators)
 
             N_x = eval_string(block["samples"], vars, iterators)
          end
