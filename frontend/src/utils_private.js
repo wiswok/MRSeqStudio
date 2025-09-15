@@ -1,10 +1,9 @@
-function komaMRIsim(phantom, seq_json, scanner_json){
+function komaMRIsim(seq_json, scanner_json){
 
     const scannerObj = JSON.parse(scanner_json);
     const seqObj     = JSON.parse(seq_json);
 
     var params = {
-        phantom: phantom,
         sequence: seqObj,
         scanner: scannerObj
     }

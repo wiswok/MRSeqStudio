@@ -337,8 +337,8 @@ EM_JS(void, plot_3d, (float gx, float gy, float gz, float deltaf, float gamma), 
 EM_JS(void, display_phantom, (const char* filename), {
     displayVolume(UTF8ToString(filename));
 })
-EM_JS(void, sim_js, (const char* phantom, const char* seqModel, const char* scanModel), {
-    komaMRIsim(UTF8ToString(phantom), UTF8ToString(seqModel), UTF8ToString(scanModel));
+EM_JS(void, sim_js, (const char* seqModel, const char* scanModel), {
+    komaMRIsim(UTF8ToString(seqModel), UTF8ToString(scanModel));
 })
 #endif
 
@@ -485,10 +485,10 @@ void Backend::displayPhantom(QString filename){
     #endif
 }
 
-void Backend::simulate(QString phantom, QString qmlSeq, QString qmlScan){
+void Backend::simulate(QString qmlSeq, QString qmlScan){
     #ifdef Q_OS_WASM
         QByteArray seqData      = processJSONSequence(parseQStringtoQByteArray(qmlSeq));
         QByteArray scanData     = parseQStringtoQByteArray(qmlScan);
-        sim_js(phantom.toStdString().c_str(), QString(seqData).toStdString().c_str(), QString(scanData).toStdString().c_str());
+        sim_js(QString(seqData).toStdString().c_str(), QString(scanData).toStdString().c_str());
     #endif
 }

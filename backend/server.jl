@@ -104,6 +104,51 @@ function AuthMiddleware(handler)
 end
 
 # ---------------------------- API METHODS ---------------------------------
+@swagger """
+/login:
+   get:
+      tags:
+      - users
+      summary: Get the login page
+      description: Returns the login HTML page.
+      responses:
+         '200':
+            description: Login HTML page
+            content:
+              text/html:
+                schema:
+                  format: html
+         '404':
+            description: Not found
+         '500':
+            description: Internal server error
+   post:
+      tags:
+      - users
+      summary: Authenticate user and start session
+      description: Authenticates a user and starts a session, returning a JWT token in a cookie.
+      requestBody:
+         required: true
+         content:
+            application/json:
+               schema:
+                  type: object
+                  properties:
+                     username:
+                        type: string
+                     password:
+                        type: string
+                  required:
+                     - username
+                     - password
+      responses:
+         '200':
+            description: Login successful, JWT token set in cookie
+         '401':
+            description: Invalid credentials
+         '500':
+            description: Internal server error
+"""
 @get "/login" function(req::HTTP.Request) 
    return render_html(dynamic_files_path * "/login.html")
 end
@@ -114,6 +159,54 @@ end
    return authenticate(input_data["username"], input_data["password"], ipaddr)
 end
 
+@swagger """
+/register:
+   get:
+      tags:
+      - users
+      summary: Get the registration page
+      description: Returns the registration HTML page.
+      responses:
+         '200':
+            description: Registration HTML page
+            content:
+              text/html:
+                schema:
+                  format: html
+         '404':
+            description: Not found
+         '500':
+            description: Internal server error
+   post:
+      tags:
+      - users
+      summary: Register a new user
+      description: Registers a new user with username, password, and email.
+      requestBody:
+         required: true
+         content:
+            application/json:
+               schema:
+                  type: object
+                  properties:
+                     username:
+                        type: string
+                     password:
+                        type: string
+                     email:
+                        type: string
+                  required:
+                     - username
+                     - password
+                     - email
+      responses:
+         '201':
+            description: User created successfully
+         '400':
+            description: Invalid input or user already exists
+         '500':
+            description: Internal server error
+"""
 @get "/register" function(req::HTTP.Request) 
    return render_html(dynamic_files_path * "/register.html")
 end
@@ -123,6 +216,26 @@ end
    return create_user(input_data["username"], input_data["password"], input_data["email"])
 end
 
+@swagger """
+/logout:
+   get:
+      tags:
+      - users
+      summary: Logout user
+      description: Logs out the current user and invalidates the session.
+      responses:
+         '200':
+            description: Logout successful, JWT cookie cleared
+            headers:
+               Set-Cookie:
+                  description: JWT token cookie cleared
+                  schema:
+                     type: string
+         '401':
+            description: Not authenticated
+         '500':
+            description: Internal server error
+"""
 @get "/logout" function(req::HTTP.Request) 
    jwt1 = get_jwt_from_cookie(HTTP.header(req, "Cookie"))
    username = claims(jwt1)["username"]
@@ -138,7 +251,7 @@ end
 /:
    get:
       tags:
-      - web
+      - gui
       summary: Redirect to the app
       description: Redirect to the app
       responses:
@@ -166,7 +279,7 @@ end
 /app:
    get:
       tags:
-      - web
+      - gui
       summary: Get the app and the web content
       description: Get the app and the web content
       responses:
@@ -200,14 +313,11 @@ end
                schema:
                   type: object
                   properties:
-                     phantom:
-                        type: string
                      sequence:
                         type: object
                      scanner:
                         type: object
                example:
-                  phantom: "Brain 2D"
                   sequence: {
                      "blocks": [
                         {
@@ -312,7 +422,6 @@ end
 
    scanner_json   = json(req)["scanner"]
    sequence_json  = json(req)["sequence"]
-   phantom_string = json(req)["phantom"]
 
    jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
    username = claims(jwt2)["username"]
@@ -463,7 +572,7 @@ end
 /plot_sequence:
    post:
       tags:
-      - plot_sequence
+      - plot
       summary: Plot a sequence
       description: Plot a sequence
       requestBody:
@@ -598,6 +707,55 @@ end
 end
 
 ## SELECT AND PLOT PHANTOM
+@swagger """
+/plot_phantom:
+   post:
+      tags:
+      - plot
+      summary: Initialize and plot the selected phantom for the user
+      description: >
+         This endpoint is called from the frontend every time the user changes the "Phantom" field in the interface.
+         It initializes the user's phantom in the backend according to the selected value and returns an HTML response with an interactive plot of the selected phantom.
+         The plot corresponds to the selected map (e.g., PD, T1, T2, Δw) and is sized according to the provided width and height.
+         The user must be authenticated (requires Authorization header with JWT).
+      requestBody:
+         required: true
+         content:
+            application/json:
+               schema:
+                  type: object
+                  properties:
+                     phantom:
+                        type: string
+                        description: Name of the phantom to initialize (e.g., "brain2D", "aorta3D", etc.)
+                     map:
+                        type: string
+                        description: Map to plot ("PD", "T1", "T2", "dw", etc.)
+                     width:
+                        type: integer
+                        description: Plot width in pixels
+                     height:
+                        type: integer
+                        description: Plot height in pixels
+               example:
+                  phantom: "brain2D"
+                  map: "PD"
+                  width: 800
+                  height: 600
+      responses: 
+         '200':
+            description: Interactive HTML plot of the selected phantom
+            content:
+              text/html:
+                schema:
+                  format: html
+         '400':
+            description: Invalid input
+         '401':
+            description: Unauthorized (missing or invalid JWT)
+         '500':
+            description: Internal server error
+"""
 @post "/plot_phantom" function(req::HTTP.Request)
    input_data = json(req)
    phantom_string = input_data["phantom"]
@@ -610,7 +768,7 @@ end
    username = claims(jwt2)["username"]
 
    if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
-      assign_process(username) # We assign a new julia process to the user
+      assign_process(username) # Assign a new Julia process to the user
    end
    try
       phantom_path = "phantoms/$phantom_string/$phantom_string.phantom"

@@ -64,7 +64,7 @@ Rectangle{
         font.pointSize: window.fontSize
 
         onClicked: {
-            simulate(phantomInput.currentText)
+            simulate()
         }
     }
 }

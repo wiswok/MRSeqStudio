@@ -542,10 +542,10 @@ ApplicationWindow {
         backend.plotSequence(scanstore, seqstore);
     }
 
-    function simulate(phantom_string){
+    function simulate(){
         var scanstore = scannerToJSON();
         var seqstore  = seqToJSON();
-        backend.simulate(phantom_string, seqstore, scanstore);
+        backend.simulate(seqstore, scanstore);
     }
 
     // functions getMaxOfArray and getMinOfArray
