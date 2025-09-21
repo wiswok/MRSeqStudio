@@ -317,7 +317,7 @@ recon(raw_signal, seq) = begin
 end
 
 "Obtain raw RM signal. Input arguments are a 2D matrix (sequence) and a 1D vector (system parameters)"
-sim(sequence_json, scanner_json, phantom, path) = begin
+sim(sequence_json, scanner_json, phantom, path, gpu_active) = begin
    # Phantom
    if phantom     == "Brain 2D"
       phant = KomaMRI.brain_phantom2D()
@@ -336,6 +336,11 @@ sim(sequence_json, scanner_json, phantom, path) = begin
 
    # Simulation parameters
    simParams = Dict{String,Any}()
+   if gpu_active
+      simParams["gpu"] = true
+   else
+      simParams["gpu"] = false
+   end
 
    # Simulation
    raw_signal = 0
@@ -365,6 +370,7 @@ end
    sim_with_limits(sequence_json, scanner_json, phantom_string, statusFile, username, sequence_id)
 
 Versión de la función de simulación que tiene en cuenta los límites de usuario
+Pero que no usamos en ninguna parte porque...no se supongo que la hice para fardar o perder mi vida haciendo 2 veces la misma cosa
 """
 function sim_with_limits(sequence_json, scanner_json, phantom_string, statusFile, username, sequence_id)
    # Verificar límites antes de iniciar la simulación
@@ -376,20 +382,29 @@ function sim_with_limits(sequence_json, scanner_json, phantom_string, statusFile
    # Registrar el uso de la secuencia
    register_sequence_usage(username)
    
+   #Comprobamos los privilegios para el uso de gpu
+   user_privs = get_user_privileges(username)
+   gpu_active = false
+   if !user_privs
+      println("[!!!] No se pudo obtener los privilegios para $username")
+   else
+      gpu_active = user_privs["gpu_access"]
+   end
+
    # Ejecutar la simulación normal
-   result = sim(sequence_json, scanner_json, phantom_string, statusFile)
+   result = sim(sequence_json, scanner_json, phantom_string, statusFile, gpu_active)
    
    # Calcular tamaño aproximado del resultado
    # Este cálculo depende del tipo de resultado que genera la simulación
    # Suponiendo que result es un array 3D
    size_bytes = sizeof(result)
    size_mb = size_bytes / (1024 * 1024)
-   
+
    # Guardar el resultado si está dentro de los límites
    save_result = save_simulation_result(username, sequence_id, result)
    
    if !save_result
-      println("⚠️ No se pudo guardar el resultado para $username - excede límite de almacenamiento")
+      println("[!!!] No se pudo guardar el resultado para $username - excede límite de almacenamiento")
    else
       println("✅ Resultado guardado para $username con ID $sequence_id")
    end
@@ -461,4 +476,5 @@ end
 #    end
 #    return key
 # end
+
 

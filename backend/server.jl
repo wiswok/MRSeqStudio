@@ -20,7 +20,6 @@ using SHA
 using JWTs, MbedTLS
 using Serialization
 
-
 using StatsBase, FFTW
 using StructTypes
 
@@ -29,7 +28,7 @@ using StructTypes
    using LinearAlgebra
    using JSON3
    using Dates
-   # using CUDA #TODO: Find a way to choose between CPU and GPU
+   using CUDA
 end
 
 dynamic_files_path = string(@__DIR__, "/../frontend/dist")
@@ -50,8 +49,7 @@ global STATUS_FILES    = Dict{Int, String}()
 global SIM_METADATA = Dict{Int, Any}()
 
 # ---------------------------- GLOBAL VARIABLES --------------------------------
-# These won't be necessary once the simulation-process 
-# correspondence table is implemented
+# Estas no harán falta una vez esté la tabla simulación-proceso implementada
 
 # global statusFile = ""
 # global simProgress = -1
@@ -77,6 +75,7 @@ global SIM_METADATA = Dict{Int, Any}()
       close(io)
       return nothing
    end
+
    function update_progress!(w::String, progress::Int)
       io = open(w,"w")
       write(io,progress)
@@ -102,6 +101,7 @@ function normalize_keys(obj)
     return Dict(String(k) => (v isa Dict || v isa JSON3.Object ? normalize_keys(v) : v) 
                for (k, v) in pairs(dict))
 end
+
 ## AUTHENTICATION
 function AuthMiddleware(handler)
    return function(req::HTTP.Request)
@@ -368,12 +368,22 @@ end
 
    # Registrar el uso de secuencia
    register_sequence_usage(username)
+   save_sequence(username, sequence_unique_id, sequence_json)
+   #Comprobamos los privilegios para el uso de gpu
+   user_privs = get_user_privileges(username)
+   gpu_active = false
+   if user_privs === nothing
+      println("[!!!] No se pudo obtener los privilegios para $username")
+   else
+      gpu_active = user_privs["gpu_access"]
+   end
 
    if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
       assign_process(username) # We assign a new julia process to the user
    end
+   println("ERROR")
    # Simulation  (asynchronous. It should not block the HTTP 202 Response)
-   SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID])
+   SIM_RESULTS[simID] = @spawnat ACTIVE_SESSIONS[username] sim(sequence_json, scanner_json, phantom_string, STATUS_FILES[simID], gpu_active)
 
    # while 1==1
    #    io = open(statusFile,"r")
@@ -989,6 +999,7 @@ swagger_document = build(openApi)
 setschema(swagger_document)
 
 serve(host="0.0.0.0",port=8000, middleware=[AuthMiddleware])
+
 
 
 

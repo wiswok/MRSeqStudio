@@ -56,7 +56,17 @@ module.exports = (env, argv) => {
                 patterns: [
                     { from: 'src/utils_private.js', to: '.' },
                     { from: 'src/assets', to: 'assets' },
-                    { from: 'node_modules/@itk-wasm/image-io/dist/pipelines/*.{js,wasm,wasm.zst}', to: 'pipelines/[name][ext]' }
+                    { from: 'node_modules/@itk-wasm/image-io/dist/pipelines/*.{js,wasm,wasm.zst}', to: 'pipelines/[name][ext]' },
+                    
+                    { from: 'src/admin.html', to: 'admin.html' },
+                    { from: 'src/results.html', to: 'results.html' },
+                    // { from: 'src/sequences.html', to: 'sequences.html' },
+                    { from: 'src/admin.js', to: 'admin.js' },
+                    { from: 'src/results.js', to: 'results.js' },
+                    // { from: 'src/sequences.js', to: 'sequences.js' },
+                    { from: 'src/admin.css', to: 'admin.css' },
+                    { from: 'src/results.css', to: 'results.css' },
+                    // { from: 'src/sequences.css', to: 'sequences.css'}
                 ],
             }),
         ],
@@ -69,3 +79,5 @@ module.exports = (env, argv) => {
         devtool: 'source-map',
     };
 };
+
+
