@@ -62,9 +62,47 @@ Rectangle{
         height: 25
         width: 100
         font.pointSize: window.fontSize
+        font.bold: true
+
+        background: Rectangle {
+            id: simulateButtonBackground
+            color: simulateButton.hovered ? "#046642" : "#1d9bf0"
+            radius: 6
+        }
+
+        contentItem: Text {
+            text: simulateButton.text
+            font: simulateButton.font
+            color: "white"
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
 
         onClicked: {
             simulate()
         }
+
+        states: [
+                State{
+                    when: !simulateButton.hovered
+                    PropertyChanges {
+                        target: simulateButtonBackground
+                        color: "#1d9bf0"
+                    }
+                },
+                State{
+                    when: simulateButton.hovered
+                    PropertyChanges {
+                        target: simulateButtonBackground
+                        color: "#046642"
+                    }
+                }
+            ] // states
+
+        transitions: [
+            Transition{
+                PropertyAnimation {property: "color"; duration: 200}
+            }
+        ]
     }
 }
