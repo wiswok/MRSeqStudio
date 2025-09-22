@@ -607,7 +607,7 @@ end
       width  = width  - 15
       height = height - 20
       p_img    = plot_image(abs.(img[:,:,1]);    darkmode=true, width=width, height=height)
-      p_kspace = plot_image(abs.(kspace[:,:,1]); darkmode=true, width=width, height=height)
+      p_kspace = plot_image(abs.(kspace[:,:,1]); darkmode=true, width=width, height=height, zmax=percentile(vec(abs.(kspace[:,:,1])), 99))
       
       # Create separate HTML buffers
       img_buffer = IOBuffer()
