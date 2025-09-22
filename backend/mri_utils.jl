@@ -5,7 +5,8 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
    vars = read_variables(json_seq["variables"])
 
    global seq = Sequence()
-   
+   global R = float([1 0 0; 0 1 0; 0 0 1])
+
    N_x = 0
 
    blocks = json_seq["blocks"]
@@ -62,8 +63,6 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
          end
 
       elseif block["cod"] == 1       # <-------------------------- Excitation
-         # print("Excitation\n")
-
          rf     = block["rf"][1]
          shape  = rf["shape"]
          deltaf = eval_string(rf["deltaf"], vars, iterators)
@@ -115,24 +114,24 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
          end
 
          EX.GR = get_gradients(block)
+
+         REF = [0, 0, 1]
+         G = vec(EX.GR.A)
+         cross_prod = LinearAlgebra.cross(REF, G)
+         n = normalize(cross_prod)
+         θ = asin(norm(cross_prod)/(norm(REF)*norm(G)))
+         R = norm(cross_prod) > 0 ? Un(θ, n) : R
+
          EX.RF[1].delay = maximum(EX.GR.rise)
          EX.DUR[1] = EX.RF[1].delay + max(maximum(EX.GR.T .+ EX.GR.fall), duration)
          seq += EX
 
       elseif block["cod"] == 2       # <-------------------------- Delay
-         # print("Delay\n")
-
          duration = eval_string(block["duration"], vars, iterators)
          DELAY = Delay(duration)
          seq += DELAY
 
       elseif block["cod"] in [3,4]   # <-------------------------- Dephase or Readout
-         if block["cod"] == 3
-            # print("Dephase\n")
-         elseif block["cod"] == 4
-            # print("Readout\n")
-         end
-
          DEPHASE = Sequence(get_gradients(block))
 
          if block["cod"] == 4
@@ -144,11 +143,9 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
             N_x = eval_string(block["samples"], vars, iterators)
          end
 
-         seq += DEPHASE
+         seq += R * DEPHASE
 
       elseif block["cod"] == 5       # <-------------------------- EPI
-         # print("EPI\n")
-
          fov = eval_string(block["fov"], vars, iterators)
          lines = eval_string(block["lines"], vars, iterators)
          samples = eval_string(block["samples"], vars, iterators)
@@ -157,11 +154,9 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
 
          epi = EPI(fov, lines, sys)
 
-         seq += epi
+         seq += R * epi
 
       elseif block["cod"] == 6       # <-------------------------- GRE  
-         # print("GRE\n")
-
          fov = eval_string(block["fov"], vars, iterators)
          lines = eval_string(block["lines"], vars, iterators)
          samples = eval_string(block["samples"], vars, iterators)
@@ -174,7 +169,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
          α     = eval_string(rf["flipAngle"], vars, iterators)
          Δf    = eval_string(rf["deltaf"], vars, iterators)
 
-         seq += GRE(fov, lines, te, tr, α, sys; Δf=Δf)
+         seq += R * GRE(fov, lines, te, tr, α, sys; Δf=Δf)
       end 
    end
 
@@ -187,7 +182,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
    seq.DEF = Dict("Nx"=>N_x,"Ny"=>N_x,"Nz"=>1)
 
    display(seq)
-   return seq
+   return seq, R
 end
 
 "Convert a json string containing scanner information into a KomaMRIBase.Scanner object"
@@ -206,53 +201,45 @@ json_to_scanner(json_scanner::JSON3.Object) = begin
    return sys
 end
 
-"Obtain the reconstructed image from raw_signal (obtained from simulation)"
-recon(raw_signal, seq) = begin
-   recParams = Dict{Symbol,Any}(:reco=>"direct")
-   Nx = seq.DEF["Nx"]
-   Ny = seq.DEF["Ny"]
-
-   recParams[:reconSize] = (Nx, Ny)
-   recParams[:densityWeighting] = false
-
-   acqData = AcquisitionData(raw_signal)
-   acqData.traj[1].circular = false #Removing circular window
-   acqData.traj[1].nodes = acqData.traj[1].nodes[1:2,:] ./ maximum(2*abs.(acqData.traj[1].nodes[:])) #Normalize k-space to -.5 to .5 for NUFFT
-
-   aux = @timed reconstruction(acqData, recParams)
-   image  = reshape(aux.value.data,Nx,Ny,:)
-   kspace = KomaMRI.fftc(reshape(aux.value.data,Nx,Ny,:))
-
-   return image, kspace
-end
-
-"Obtain raw RM signal. Input arguments are a 2D matrix (sequence) and a 1D vector (system parameters)"
-sim(phantom, sequence_json, scanner_json, path) = begin
-   # Scanner
-   sys = json_to_scanner(scanner_json)
-
-   # Sequence
-   seq = json_to_sequence(sequence_json, sys)
-
-   # Simulation parameters
-   simParams = Dict{String,Any}()
-
-   # Simulation
-   raw_signal = 0
+"Obtain raw RM signal"
+sim(obj, seq, sys, path; sim_params=Dict{String,Any}()) = begin
    try
-      raw_signal = simulate(phantom, seq, sys; sim_params=simParams, w=path)
+      return simulate(obj, seq, sys; sim_params=sim_params, w=path)
    catch e
       println("Simulation failed")
       display(e)
       update_progress!(path, -2)
       return e
    end
+end
 
-   # Reconstruction
+"Obtain the reconstructed image from raw_signal (obtained from simulation)"
+recon(raw_signal, seq, rot_matrix, path) = begin
    try
-      image, kspace = recon(raw_signal, seq)
+      seq_no_rot = inv(rot_matrix) * seq
+      _, ktraj = get_kspace(seq_no_rot)
+
+      recParams = Dict{Symbol,Any}(:reco=>"direct")
+      Nx = seq.DEF["Nx"]
+      Ny = seq.DEF["Ny"]
+
+      recParams[:reconSize] = (Nx, Ny)
+      recParams[:densityWeighting] = false
+
+      acqData = AcquisitionData(raw_signal)
+      acqData.traj[1].circular = false #Removing circular window
+      acqData.traj[1].nodes = transpose(ktraj[:, 1:2]) #<----------------CAMBIO
+      acqData.traj[1].nodes = acqData.traj[1].nodes[1:2,:] ./ maximum(2*abs.(acqData.traj[1].nodes[:])) #Normalize k-space to -.5 to .5 for NUFFT
+
+      Nx, Ny = raw_signal.params["reconSize"][1:2]
+      recParams[:reconSize] = (Nx, Ny)
+      recParams[:densityWeighting] = true
+
+      aux = @timed reconstruction(acqData, recParams)
+      image  = reshape(aux.value.data,Nx,Ny,:)
+      kspace = KomaMRI.fftc(reshape(aux.value.data,Nx,Ny,:))
       update_progress!(path, 101)
-      return image
+      return image, kspace
    catch e
       println("Reconstruction failed")
       display(e)
@@ -279,6 +266,7 @@ function read_iterators(json_blocks::JSON3.Array)
    return iterators
 end
 
+# TODO; Check security problems with this function.
 "Eval a string expression and return the result"
 function eval_string(expr::String, variables::Dict, iterators::Dict{String,Int}=Dict{String,Int}())
    if expr == ""

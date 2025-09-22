@@ -34,26 +34,26 @@ phantom_files_path = string(@__DIR__, "/phantoms")
 dynamicfiles(dynamic_files_path, "/") 
 staticfiles(phantom_files_path, "/public")
 
-const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map", "/register", "/"]
-const PRIVATE_URLS = ["/simulate", "/plot_sequence", "/plot_phantom"]
+const PUBLIC_URLS = ["/login", "/login.js", "/login.js.map", "/register"]
+const PRIVATE_URLS = ["/simulate", "/recon", "/plot_sequence", "/plot_phantom"]
 
 const AUTH_FILE  = "auth.txt"
 const USERS_FILE = "users.txt"
 
 global simID = 1
-global ACTIVE_SESSIONS = Dict{String, Int}()
-global SIM_PROGRESSES  = Dict{Int, Int}()
-global SIM_RESULTS     = Dict{Int, Any}()
-global STATUS_FILES    = Dict{Int, String}()
-global PHANTOMS        = Dict{Int, Phantom}()       
-
-# ---------------------------- GLOBAL VARIABLES --------------------------------
-# These won't be necessary once the simulation-process 
-# correspondence table is implemented
-
-# global statusFile = ""
-# global simProgress = -1
-# global result = nothing
+# Dictionaries whose key is the simulation ID
+global SIM_PROGRESSES   = Dict{Int, Int}()
+global RECON_PROGRESSES = Dict{Int, Int}()
+global STATUS_FILES     = Dict{Int, String}()
+# Dictionaries whose key is the username
+global RAW_RESULTS      = Dict{String, Any}()
+global RECON_RESULTS    = Dict{String, Any}()
+global PHANTOMS         = Dict{String, Phantom}()   
+global SEQUENCES        = Dict{String, Sequence}()   
+global SCANNERS         = Dict{String, Scanner}()
+global ROT_MATRICES     = Dict{String, Matrix}() 
+# User-Process correspondence (Key:username, Value:pid)
+global ACTIVE_SESSIONS  = Dict{String, Int}()
 
 # ------------------------------ FUNCTIONS ------------------------------------
 @everywhere begin
@@ -63,10 +63,8 @@ global PHANTOMS        = Dict{Int, Phantom}()
 
    """Updates simulation progress and writes it in a file."""
    function KomaMRICore.update_blink_window_progress!(w::String, block, Nblocks)
-      io = open(w,"w") # "w" mode overwrites last status value, even if it was not read yet
       progress = trunc(Int, block / Nblocks * 100)
-      write(io,progress)
-      close(io)
+      update_progress!(w, progress)
       return nothing
    end
    function update_progress!(w::String, progress::Int)
@@ -90,14 +88,14 @@ function AuthMiddleware(handler)
 
       if (path in PUBLIC_URLS) 
       # Public resource. This does not requires cookie
-         return check_jwt(jwt1, ipaddr, 1) ? HTTP.Response(303, ["Location" => "/"]) : handler(req)
+         return check_jwt(jwt1, ipaddr, 1) ? HTTP.Response(303, ["Location" => "/app"]) : handler(req)
 
       elseif any(base -> startswith(path, base), PRIVATE_URLS) 
       # Private resource. This requires both the cookie and the Authorization header
          return (check_jwt(jwt1, ipaddr, 1) && check_jwt(jwt2, ipaddr, 2)) ? handler(req) : HTTP.Response(303, ["Location" => "/login"])
 
       else 
-      # Private dashboard. This only requires the cookie
+      # Private dashboard. This only requires the cookie.
          return check_jwt(jwt1, ipaddr, 1) ? handler(req) : HTTP.Response(303, ["Location" => "/login"])
       end
    end
@@ -248,34 +246,6 @@ end
 end
 
 @swagger """
-/:
-   get:
-      tags:
-      - gui
-      summary: Redirect to the app
-      description: Redirect to the app
-      responses:
-         '301':
-            description: Redirect to /app
-            headers:
-              Location:
-                description: URL with the app
-                schema:
-                  type: string
-                  format: uri
-         default:
-            description: Always returns a 301 redirect to /app
-            headers:
-              Location:
-                schema:
-                  type: string
-                  example: "/app"
-"""
-@get "/" function(req::HTTP.Request)
-   return HTTP.Response(301, ["Location" => "/app"])
-end
-
-@swagger """
 /app:
    get:
       tags:
@@ -417,36 +387,26 @@ end
             description: Internal server error
 """
 @post "/simulate" function(req::HTTP.Request)
-   STATUS_FILES[simID] = tempname()
-   touch(STATUS_FILES[simID])
-
    scanner_json   = json(req)["scanner"]
    sequence_json  = json(req)["sequence"]
 
    jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
-   username = claims(jwt2)["username"]
+   uname = claims(jwt2)["username"]
 
-   if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
-      assign_process(username) # We assign a new julia process to the user
+   if !haskey(ACTIVE_SESSIONS, uname) # Check if the user has already an active session
+      assign_process(uname) # We assign a new julia process to the user
    end
-   # Simulation  (asynchronous. It should not block the HTTP 202 Response)
-   pid = ACTIVE_SESSIONS[username]
-   phantom = PHANTOMS[pid]
-   SIM_RESULTS[simID] = @spawnat pid sim(phantom, sequence_json, scanner_json, STATUS_FILES[simID])
 
-   # while 1==1
-   #    io = open(statusFile,"r")
-   #    if (!eof(io))
-   #       global simProgress = read(io,Int32)
-   #       print("leido\n")
-   #    end
-   #    close(io)
-   #    print("Progreso: ", simProgress, '\n')
-   #    sleep(0.2)
-   # end
+   pid = ACTIVE_SESSIONS[uname]
 
-   # TODO: Update simulation-process correspondence table
+   STATUS_FILES[simID] = tempname()
+   touch(STATUS_FILES[simID])
+   
+   SCANNERS[uname]                       = json_to_scanner(scanner_json)
+   SEQUENCES[uname], ROT_MATRICES[uname] = json_to_sequence(sequence_json, SCANNERS[uname])
 
+   RAW_RESULTS[uname]                    = @spawnat pid sim(PHANTOMS[uname], SEQUENCES[uname], SCANNERS[uname], STATUS_FILES[simID])
+   
    headers = ["Location" => string("/simulate/",simID)]
    global simID += 1
    # 202: Partial Content
@@ -501,6 +461,8 @@ end
             description: Internal server error
 """
 @get "/simulate/{simID}" function(req::HTTP.Request, simID, width::Int, height::Int)
+   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+   uname = claims(jwt2)["username"]
    _simID = parse(Int, simID)
    io = open(STATUS_FILES[_simID],"r")
    SIM_PROGRESSES[_simID] = -1 # Initialize simulation progress
@@ -508,21 +470,19 @@ end
       SIM_PROGRESSES[_simID] = read(io,Int32)
    end
    close(io)
-   if -2 < SIM_PROGRESSES[_simID] < 101      # Simulation not started or in progress
+   if -2 < SIM_PROGRESSES[_simID] < 100      # Simulation not started or in progress
       headers = ["Location" => string("/simulate/",_simID,"/status")]
       return HTTP.Response(303,headers)
-   elseif SIM_PROGRESSES[_simID] == 101  # Simulation finished
-      # global simProgress = -1 # TODO: this won't be necessary once the simulation-process correspondence table is implemented 
+   elseif SIM_PROGRESSES[_simID] == 100  # Simulation finished
       width  = width  - 15
       height = height - 20
-      im = fetch(SIM_RESULTS[_simID])      # TODO: once the simulation-process correspondence table is implemented, this will be replaced by the corresponding image 
-      p = plot_image(abs.(im[:,:,1]); darkmode=true, width=width, height=height)
+      sig = fetch(RAW_RESULTS[uname])  
+      p = plot_signal(sig; darkmode=true, width=width, height=height, slider=height>275)
       html_buffer = IOBuffer()
       KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
       return HTTP.Response(200,body=take!(html_buffer))
    elseif SIM_PROGRESSES[_simID] == -2 # Simulation failed
-      error_msg = fetch(SIM_RESULTS[_simID])
-      return HTTP.Response(500,body=JSON3.write(error_msg))
+      return HTTP.Response(500,body=JSON3.write("Simulation failed"))
    end
 end
 
@@ -567,7 +527,115 @@ end
    return HTTP.Response(200,body=JSON3.write(SIM_PROGRESSES[parse(Int, simID)]))
 end
 
-# PLOT SEQUENCE
+## RECONSTRUCTION
+@swagger """
+/recon/{simID}:
+   post:
+      tags:
+      - reconstruction
+      summary: Start reconstruction for a completed simulation
+      description: Start reconstruction for a previously completed simulation using the existing simulation data
+      parameters:
+         - in: path
+           name: simID
+           required: true
+           description: The ID of the completed simulation to reconstruct
+           schema:
+              type: integer
+              example: 1
+      responses:
+         '202':
+            description: Accepted operation
+            headers:
+              Location:
+                description: URL with the reconstruction ID, to check the status of the reconstruction
+                schema:
+                  type: string
+                  format: uri
+         '400':
+            description: Invalid input (no simulation data or simulation not complete)
+         '500':
+            description: Internal server error
+"""
+@post "/recon/{simID}" function(req::HTTP.Request, simID)
+   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+   uname = claims(jwt2)["username"]
+   _simID = parse(Int, simID)
+
+   if !haskey(ACTIVE_SESSIONS, uname) # Check if the user has already an active session
+      assign_process(uname) # We assign a new julia process to the user
+   end
+
+   pid = ACTIVE_SESSIONS[uname]
+
+   # Check if we have simulation data for this user
+   if !haskey(RAW_RESULTS, uname)
+      return HTTP.Response(400, body="No simulation data available for reconstruction")
+   end
+
+   # Check if simulation is complete by checking if we can fetch the result
+   try
+      fetch(RAW_RESULTS[uname])
+   catch
+      return HTTP.Response(400, body="Simulation not yet complete")
+   end
+   
+   RECON_RESULTS[uname] = @spawnat pid recon(fetch(RAW_RESULTS[uname]), SEQUENCES[uname], ROT_MATRICES[uname], STATUS_FILES[_simID])
+   
+   headers = ["Location" => string("/recon/",_simID)]
+   # 202: Accepted
+   return HTTP.Response(202,headers)
+end
+
+
+@get "/recon/{simID}" function(req::HTTP.Request, simID, width::Int, height::Int)
+   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+   uname = claims(jwt2)["username"]
+   _simID = parse(Int, simID)
+   io = open(STATUS_FILES[_simID],"r")
+   RECON_PROGRESSES[_simID] = -1 # Initialize reconstruction progress
+   if (!eof(io))
+      RECON_PROGRESSES[_simID] = read(io,Int32) - 100
+   end
+   close(io)
+   if RECON_PROGRESSES[_simID] == 0
+      headers = ["Location" => string("/recon/",_simID,"/status")]
+      return HTTP.Response(303,headers)
+   elseif RECON_PROGRESSES[_simID] == 1
+      img    = fetch(RECON_RESULTS[uname])[1]
+      kspace = fetch(RECON_RESULTS[uname])[2]
+      width  = width  - 15
+      height = height - 20
+      p_img    = plot_image(abs.(img[:,:,1]);    darkmode=true, width=width, height=height)
+      p_kspace = plot_image(abs.(kspace[:,:,1]); darkmode=true, width=width, height=height)
+      
+      # Create separate HTML buffers
+      img_buffer = IOBuffer()
+      kspace_buffer = IOBuffer()
+      KomaMRIPlots.PlotlyBase.to_html(img_buffer, p_img.plot)
+      KomaMRIPlots.PlotlyBase.to_html(kspace_buffer, p_kspace.plot)
+      
+      # Get the HTML content
+      img_html = String(take!(img_buffer))
+      kspace_html = String(take!(kspace_buffer))
+      
+      # Return as JSON
+      result = Dict(
+          "image_html" => img_html,
+          "kspace_html" => kspace_html
+      )
+      
+      return HTTP.Response(200, body=JSON3.write(result))
+   else
+      return HTTP.Response(404, body="Simulation not found")
+   end
+end
+
+@get "/recon/{simID}/status" function(req::HTTP.Request, simID)
+   return HTTP.Response(200,body=JSON3.write(RECON_PROGRESSES[parse(Int, simID)]))
+end
+
+## PLOT SEQUENCE
 @swagger """
 /plot_sequence:
    post:
@@ -695,14 +763,37 @@ end
       seq_data     = json(req)["sequence"]
       width  = json(req)["width"]  - 15
       height = json(req)["height"] - 20
-      sys = json_to_scanner(scanner_data)
-      seq = json_to_sequence(seq_data, sys)
-      p = plot_seq(seq; darkmode=true, width=width, height=height, slider=height>275)
-      html_buffer = IOBuffer()
-      KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
-      return HTTP.Response(200,body=take!(html_buffer))
+      jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+      uname = claims(jwt2)["username"]
+
+      if !haskey(ACTIVE_SESSIONS, uname) # Check if the user has already an active session
+         assign_process(uname) # Assign a new Julia process to the user
+      end
+      pid = ACTIVE_SESSIONS[uname]
+
+      SCANNERS[uname]                       = json_to_scanner(scanner_data)
+      SEQUENCES[uname], ROT_MATRICES[uname] = json_to_sequence(seq_data, SCANNERS[uname])
+
+      p_seq    = remotecall_fetch(plot_seq, pid, SEQUENCES[uname]; darkmode=true, width=width, height=height, slider=height>275)
+      p_kspace = remotecall_fetch(plot_kspace, pid, SEQUENCES[uname]; darkmode=true, width=width, height=height)
+
+      seq_buffer = IOBuffer()
+      kspace_buffer = IOBuffer()
+      KomaMRIPlots.PlotlyBase.to_html(seq_buffer, p_seq.plot)
+      KomaMRIPlots.PlotlyBase.to_html(kspace_buffer, p_kspace.plot)
+
+      seq_html = String(take!(seq_buffer))
+      kspace_html = String(take!(kspace_buffer))
+
+      result = Dict(
+          "seq_html" => seq_html,
+          "kspace_html" => kspace_html
+      )
+
+      return HTTP.Response(200,body=JSON3.write(result))
    catch e
-      return HTTP.Response(500,body=JSON3.write(e))
+      println(e)
+      return HTTP.Response(500,body=JSON3.write(string(e)))
    end
 end
 
@@ -757,24 +848,26 @@ end
             description: Internal server error
 """
 @post "/plot_phantom" function(req::HTTP.Request)
-   input_data = json(req)
-   phantom_string = input_data["phantom"]
-   map_str = input_data["map"]
-   map = map_str == "PD" ? :ρ  : 
-         map_str == "dw" ? :Δw : 
-         map_str == "T1" ? :T1 : 
-         map_str == "T2" ? :T2 : map_str
-   jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
-   username = claims(jwt2)["username"]
-
-   if !haskey(ACTIVE_SESSIONS, username) # Check if the user has already an active session
-      assign_process(username) # Assign a new Julia process to the user
-   end
    try
+      input_data = json(req)
+      phantom_string = input_data["phantom"]
+      map_str = input_data["map"]
+      map = map_str == "PD" ? :ρ  : 
+            map_str == "dw" ? :Δw : 
+            map_str == "T1" ? :T1 : 
+            map_str == "T2" ? :T2 : map_str
+      jwt2 = get_jwt_from_auth_header(HTTP.header(req, "Authorization"))
+      uname = claims(jwt2)["username"]
+
+      if !haskey(ACTIVE_SESSIONS, uname) # Check if the user has already an active session
+         assign_process(uname) # Assign a new Julia process to the user
+      end
+      pid = ACTIVE_SESSIONS[uname]
+
       phantom_path = "phantoms/$phantom_string/$phantom_string.phantom"
       obj = read_phantom(phantom_path)
       obj.Δw .= 0
-      PHANTOMS[ACTIVE_SESSIONS[username]] = obj
+      PHANTOMS[uname] = obj
 
       width  = json(req)["width"]  - 15
       height = json(req)["height"] - 15
@@ -782,9 +875,10 @@ end
                      obj.name == "Flow Cylinder" ? 50  : 2;
       ss           = obj.name == "Aorta"         ? 100 : 
                      obj.name == "Flow Cylinder" ? 100 : 1;
-      p = plot_phantom_map(obj[1:ss:end], map; darkmode=true, width=width, height=height, time_samples=time_samples)
+
+      p = @spawnat pid plot_phantom_map(PHANTOMS[uname][1:ss:end], map; darkmode=true, width=width, height=height, time_samples=time_samples)
       html_buffer = IOBuffer()
-      KomaMRIPlots.PlotlyBase.to_html(html_buffer, p.plot)
+      KomaMRIPlots.PlotlyBase.to_html(html_buffer, fetch(p).plot)
       return HTTP.Response(200,body=take!(html_buffer))
    catch e
       return HTTP.Response(500,body=JSON3.write(e))

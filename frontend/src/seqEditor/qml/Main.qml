@@ -573,7 +573,7 @@ ApplicationWindow {
     }
 
     // function evalExpression() evaluates a mathematical expression which can contain variable names
-    function evalExpression(expression) {
+    function evalExpression(expression) { // TODO; Check security problems with this function. Lista blanca de operadores
         try {
             if (expression === "" || expression === null || expression === undefined) {
                 return 0;

@@ -60,7 +60,7 @@ function getViewerMode(){
 function setViewerMode(mode){
   localStorage.setItem('viewerMode', mode)
   const vtkDiv = document.getElementById("VTKjs")
-  const iframe = document.getElementById("phantom")
+  const iframe = document.getElementById("phantomViewer")
   if(mode === 'slices'){
     vtkDiv.style.display = 'block'
     iframe.style.visibility = 'hidden'
@@ -105,6 +105,7 @@ async function setNormalPlane(gx, gy, gz, deltaf, gamma){
   addSlicePlane()
   renderWindow3d.render()
 }
+
 window.setNormalPlane = setNormalPlane
 
 async function displayVolume(filename){
@@ -112,7 +113,7 @@ async function displayVolume(filename){
   window.currentPhantom = filename
   
   const loading = document.getElementById("loading-viewer");
-  const iframe = document.getElementById("phantom");
+  const iframe = document.getElementById("phantomViewer");
   const vtkDiv = document.getElementById("VTKjs");
   const currentMode = getViewerMode();
   const currentMap = getMapMode();
