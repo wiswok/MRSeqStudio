@@ -143,7 +143,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
             N_x = eval_string(block["samples"], vars, iterators)
          end
 
-         seq += R * DEPHASE
+         seq += DEPHASE
 
       elseif block["cod"] == 5       # <-------------------------- EPI
          fov = eval_string(block["fov"], vars, iterators)
@@ -152,9 +152,7 @@ json_to_sequence(json_seq::JSON3.Object, sys::Scanner) = begin
 
          N_x = eval_string(block["samples"], vars, iterators)
 
-         epi = EPI(fov, lines, sys)
-
-         seq += R * epi
+         seq += R * EPI(fov, lines, sys)
 
       elseif block["cod"] == 6       # <-------------------------- GRE  
          fov = eval_string(block["fov"], vars, iterators)
